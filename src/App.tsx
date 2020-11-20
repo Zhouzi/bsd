@@ -516,6 +516,10 @@ const EXAMPLES: Example[] = [
         produce((step: ExampleStep) => {
           step.name = "Arrivée à l'entreposage provisoire";
           step.bsd.temporaryStorage!.arrivedAt = new Date().toLocaleDateString();
+          step.bsd.temporaryStorage!.quantity = {
+            type: QuantityType.Estimated,
+            tons: 0.5,
+          };
         }),
         produce((step: ExampleStep) => {
           step.name = "Accepté par l'entreposage provisoire";
@@ -525,7 +529,7 @@ const EXAMPLES: Example[] = [
           };
         }),
         produce((step: ExampleStep) => {
-          step.name = "Dépârt de l'entreposage provisoire";
+          step.name = "Dépârt de l'entreposage provisoire (incomplet)";
         }),
         produce((step: ExampleStep) => {
           step.name = "Arrivée à l'installation de destination";
