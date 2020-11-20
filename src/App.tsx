@@ -117,8 +117,12 @@ const BsdInput = styled(AutosizeInput).attrs({ placeholder: " ".repeat(6) })`
     }
   }
 `;
-function BsdInputField({ field, form, ...props }: FieldProps) {
-  return <BsdInput {...field} {...props} />;
+function BsdInputField({
+  field: { value, ...field },
+  form,
+  ...props
+}: FieldProps) {
+  return <BsdInput value={value ?? ""} {...field} {...props} />;
 }
 
 const BsdList = styled.ul<{ orientation?: "horizontal" | "vertical" }>`
