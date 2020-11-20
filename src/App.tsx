@@ -13,29 +13,37 @@ const GlobalStyle = createGlobalStyle`
     font-family: 'Source Sans Pro', sans-serif;
     font-size: 1rem;
     line-height: 1.4;
-    background-color: #eee;
+    color: #060a2b;
+    background-color: #f6f7ff;
   }
 `;
 const Layout = styled.div`
   display: flex;
   min-height: 100vh;
 `;
-const ExamplesColumn = styled.div`
-  width: 20%;
+const LayoutColumn = styled.div`
   max-height: 100vh;
   overflow-y: auto;
 `;
-const BsdColumn = styled.div`
+const LayoutColumnTitle = styled.div`
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  font-weight: bold;
+  letter-spacing: 0.05rem;
+  padding: 1rem;
+  color: #5d64a2;
+`;
+const ExamplesColumn = styled(LayoutColumn)`
+  width: 20%;
+`;
+const BsdColumn = styled(LayoutColumn)`
   flex: 1;
   background-color: #fff;
-  padding: 1rem;
-  max-height: 100vh;
-  overflow-y: auto;
 `;
-const CodeColumn = styled.div`
+const CodeColumn = styled(LayoutColumn)`
   width: 30%;
-  max-height: 100vh;
-  overflow-y: auto;
+  color: #f6f7ff;
+  background-color: #161c4e;
 `;
 
 const ExampleItem = styled.article`
@@ -48,6 +56,7 @@ const ExampleItemName = styled.div`
 
 const BsdContainer = styled.div`
   border-bottom: 1px solid #3d3d3d;
+  margin: 1rem;
 `;
 const BsdBox = styled.div`
   border: 1px solid #3d3d3d;
@@ -108,9 +117,28 @@ const BsdListItem = styled.li`
 `;
 
 const CodeContainer = styled.pre`
-  padding: 1rem;
+  padding: 1rem 0;
   font-family: "Source Code Pro", monospace;
   margin: 0 0 0.5rem 0;
+`;
+const CodeLine = styled.div<{ variant: "added" | "removed" | "unchanged" }>`
+  padding: 0 1rem;
+
+  ${(props) => {
+    switch (props.variant) {
+      case "added":
+        return css`
+          background-color: #197546;
+        `;
+      case "removed":
+        return css`
+          background-color: #ab3939;
+        `;
+      case "unchanged":
+      default:
+        return css``;
+    }
+  }}
 `;
 
 interface Bsd {
@@ -823,6 +851,7 @@ function App() {
       <GlobalStyle />
       <Layout>
         <ExamplesColumn>
+          <LayoutColumnTitle>Scénarios</LayoutColumnTitle>
           {EXAMPLES.map((example) => (
             <ExampleItem key={example.name}>
               <ExampleItemName>{example.name}</ExampleItemName>
@@ -854,6 +883,7 @@ function App() {
           {({ initialValues, values, setFieldValue }) => (
             <>
               <BsdColumn>
+                <LayoutColumnTitle>BSD</LayoutColumnTitle>
                 <BsdContainer>
                   <BsdBox>
                     <BsdBoxColumn>
@@ -1800,23 +1830,20 @@ function App() {
                 </BsdContainer>
               </BsdColumn>
               <CodeColumn>
+                <LayoutColumnTitle>Code</LayoutColumnTitle>
                 <CodeContainer>
                   {diffJson(
                     state.example.steps[Math.max(0, state.step - 1)].bsd,
                     values
                   ).map(({ added, removed, value }, index) => (
-                    <div
+                    <CodeLine
                       key={index}
-                      style={{
-                        backgroundColor: added
-                          ? "lightgreen"
-                          : removed
-                          ? "pink"
-                          : "lightgray",
-                      }}
+                      variant={
+                        added ? "added" : removed ? "removed" : "unchanged"
+                      }
                     >
                       {value}
-                    </div>
+                    </CodeLine>
                   ))}
                 </CodeContainer>
               </CodeColumn>
