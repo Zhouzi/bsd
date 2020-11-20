@@ -39,7 +39,7 @@ const ExampleItemName = styled.div`
   font-weight: bold;
 `;
 
-const Bsd = styled.div`
+const BsdContainer = styled.div`
   font-family: serif;
   border-bottom: 1px solid #3d3d3d;
 `;
@@ -105,7 +105,7 @@ const CodeContainer = styled.pre`
   margin: 0 0 0.5rem 0;
 `;
 
-interface IBsd {
+interface Bsd {
   customId: string;
   emitter: Emitter;
   temporaryStorage: TemporaryStorage | null;
@@ -208,7 +208,7 @@ interface Example {
 }
 interface ExampleStep {
   name: string;
-  bsd: IBsd;
+  bsd: Bsd;
 }
 
 function createBsd({
@@ -222,7 +222,7 @@ function createBsd({
   transporter = createTransporter({}),
   recipient = createRecipient({}),
   finalProcessingOperation = null,
-}: Partial<IBsd>): IBsd {
+}: Partial<Bsd>): Bsd {
   return {
     customId,
     emitter,
@@ -846,7 +846,7 @@ function App() {
           {({ initialValues, values, setFieldValue }) => (
             <>
               <BsdColumn>
-                <Bsd>
+                <BsdContainer>
                   <BsdBox>
                     <BsdBoxColumn>
                       <BsdLabel>Bordereau n° :</BsdLabel>{" "}
@@ -1789,7 +1789,7 @@ function App() {
                       <BsdLabel>12. Destination ultérieure prévue</BsdLabel>
                     </BsdBoxColumn>
                   </BsdBox>
-                </Bsd>
+                </BsdContainer>
               </BsdColumn>
               <CodeColumn>
                 <CodeContainer>
