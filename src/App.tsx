@@ -5,7 +5,14 @@ import { Formik, Field, FieldProps } from "formik";
 import { diffJson } from "diff";
 
 const GlobalStyle = createGlobalStyle`
+  html {
+    font-size: 16px;
+  }
+
   body {
+    font-family: 'Source Sans Pro', sans-serif;
+    font-size: 1rem;
+    line-height: 1.4;
     background-color: #eee;
   }
 `;
@@ -40,7 +47,6 @@ const ExampleItemName = styled.div`
 `;
 
 const BsdContainer = styled.div`
-  font-family: serif;
   border-bottom: 1px solid #3d3d3d;
 `;
 const BsdBox = styled.div`
@@ -63,6 +69,7 @@ const BsdLabel = styled.label`
 const BsdInput = styled(AutosizeInput).attrs({ placeholder: " ".repeat(6) })`
   & input {
     font: inherit;
+    font-family: "Pangolin", cursive;
     color: inherit;
     padding: 0;
     border: 0;
@@ -102,6 +109,7 @@ const BsdListItem = styled.li`
 
 const CodeContainer = styled.pre`
   padding: 1rem;
+  font-family: "Source Code Pro", monospace;
   margin: 0 0 0.5rem 0;
 `;
 
