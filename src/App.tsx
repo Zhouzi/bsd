@@ -3,6 +3,7 @@ import styled, { createGlobalStyle, css } from "styled-components";
 import AutosizeInput from "react-input-autosize";
 import { Formik, Field, FieldProps } from "formik";
 import { diffJson } from "diff";
+import produce from "immer";
 
 const GlobalStyle = createGlobalStyle`
   html {
@@ -274,596 +275,219 @@ interface ExampleStep {
   bsd: Bsd;
 }
 
-function createBsd({
-  customId = "",
-  emitter = createEmitter({}),
-  temporaryStorage = null,
-  waste = createWaste({}),
-  adr = "",
-  packages = createPackages({}),
-  quantity = createQuantity({}),
-  transporter = createTransporter({}),
-  recipient = createRecipient({}),
-  finalProcessingOperation = null,
-}: Partial<Bsd>): Bsd {
-  return {
-    customId,
-    emitter,
-    temporaryStorage,
-    waste,
-    adr,
-    packages,
-    quantity,
-    transporter,
-    recipient,
-    finalProcessingOperation,
-  };
-}
-function createEmitter({
-  type = EmitterType.Producer,
-  company = createCompany({}),
-  signature = null,
-}: Partial<Emitter>): Emitter {
-  return {
-    type,
-    company,
-    signature,
-  };
-}
-function createCompany({
-  siret = "",
-  name = "",
-  address = "",
-  phone = "",
-  email = "",
-  contact = "",
-}: Partial<Company>): Company {
-  return {
-    siret,
-    name,
-    address,
-    phone,
-    email,
-    contact,
-  };
-}
-function createWaste({
-  code = "",
-  description = "",
-  consistency = WasteConsistency.Solid,
-}: Partial<Waste>): Waste {
-  return {
-    code,
-    description,
-    consistency,
-  };
-}
-function createPackages({
-  type = PackagesType.Benne,
-  quantity = 0,
-  description = "",
-}: Partial<Packages>): Packages {
-  return {
-    type,
-    quantity,
-    description,
-  };
-}
-function createQuantity({
-  type = QuantityType.Estimated,
-  tons = 0,
-}: Partial<Quantity<any>>): Quantity<any> {
-  return {
-    type,
-    tons,
-  };
-}
-function createTransporter({
-  company = createCompany({}),
-  receipt = createReceipt({}),
-  signature = null,
-}: Partial<Transporter>): Transporter {
-  return {
-    company,
-    receipt,
-    signature,
-  };
-}
-function createReceipt({
-  number = "",
-  department = "",
-  validityLimit = "",
-  transportMode = "",
-}: Partial<TransporterReceipt>): TransporterReceipt {
-  return {
-    number,
-    department,
-    validityLimit,
-    transportMode,
-  };
-}
-function createRecipient({
-  arrivedAt = null,
-  company = createCompany({}),
-  quantity = createQuantity({ type: QuantityType.Real }),
-  refusal = null,
-  signature = null,
-}: Partial<Recipient>): Recipient {
-  return {
-    arrivedAt,
-    company,
-    quantity,
-    refusal,
-    signature,
-  };
-}
-function createTemporaryStorage({
-  company = createCompany({}),
-  cap = "",
-  processingOperation = createProcessingOperation({}),
-}: Partial<TemporaryStorage>): TemporaryStorage {
-  return {
-    company,
-    cap,
-    processingOperation,
-  };
-}
-function createProcessingOperation({
-  code = "",
-  description = "",
-}: Partial<ProcessingOperation>): ProcessingOperation {
-  return {
-    code,
-    description,
-  };
+function createSteps(
+  firstStep: ExampleStep,
+  producers: Array<(previousStep: ExampleStep) => ExampleStep>
+): ExampleStep[] {
+  return producers.reduce(
+    (acc, producer) => acc.concat([producer(acc[acc.length - 1])]),
+    [firstStep]
+  );
 }
 
 const EXAMPLES: Example[] = [
   {
     name: "Classique",
     description: "Le déchet part du producteur et va directement à l'exutoire.",
-    steps: [
+    steps: createSteps(
       {
-        name: "Création",
-        bsd: createBsd({
-          customId: "EX-0001-AA",
-          emitter: createEmitter({
+        name: "Création du BSD",
+        bsd: {
+          customId: "EX-2020-001",
+          emitter: {
+            company: {
+              name: "Garage Bollier",
+              siret: "4920184028394",
+              address: "32 rue André Bollier, 69007 Lyon",
+              contact: "BOYER Jeanne",
+              email: "jeanne@garage-bollier.com",
+              phone: "06 82 92 18 50",
+            },
+            signature: null,
             type: EmitterType.Producer,
-            company: createCompany({
-              siret: "1234567890123",
-              name: "Acme",
-              address: "12 rue Michel Dupont, 69001 Lyon",
-              phone: "06 12 34 56 78",
-              email: "contact@acme.com",
-              contact: "DURAND Marie",
-            }),
-          }),
+          },
           temporaryStorage: null,
-          waste: createWaste({
+          waste: {
             code: "01 01 01",
+            description: "",
             consistency: WasteConsistency.Solid,
-          }),
+          },
           adr: "",
-          packages: createPackages({
-            type: PackagesType.Benne,
+          packages: {
+            description: "",
             quantity: 1,
-          }),
-          quantity: createQuantity({
+            type: PackagesType.Benne,
+          },
+          quantity: {
             type: QuantityType.Estimated,
-            tons: 0.5,
-          }),
-          transporter: createTransporter({
-            company: createCompany({
-              siret: "1234567890123",
-              name: "MOVIT",
-              address: "49 rue Mérieu, 69000 Lyon",
-              phone: "06 12 34 56 78",
-              email: "contact@movit.com",
-              contact: "DUPONT Jeanne",
-            }),
-            receipt: createReceipt({
-              number: "1239091023912",
-              department: "69",
-              validityLimit: "01/01/2023",
-              transportMode: "routier",
-            }),
-          }),
-          recipient: createRecipient({
-            company: createCompany({
-              siret: "1234567890123",
-              name: "PROCEXOR",
-              address: "3 rue des Acacias, 69000 Lyon",
-              phone: "06 12 34 56 78",
-              email: "contact@procexor.com",
-              contact: "BOYER Baptiste",
-            }),
-            quantity: createQuantity({
+            tons: 0.43,
+          },
+          recipient: {
+            company: {
+              name: "José Collecte d'Huiles",
+              siret: "9481927402817",
+              address: "12 rue Michel Berthelot, 69000 Lyon",
+              contact: "PAYET Jérémy",
+              email: "jeremy@jose-collecte-dhuiles.com",
+              phone: "09 78 23 12 85",
+            },
+            arrivedAt: null,
+            quantity: {
               type: QuantityType.Real,
-              tons: 1,
-            }),
-          }),
-        }),
+              tons: 0,
+            },
+            refusal: null,
+            signature: null,
+          },
+          transporter: {
+            company: {
+              name: "Inter Transports",
+              siret: "0419428495012",
+              address: "9 impasse des Acacias, 69001 Lyon",
+              contact: "GRONDIN Camille",
+              email: "camille@inter-transports.com",
+              phone: "02 58 30 12 58",
+            },
+            receipt: {
+              validityLimit: "01/01/2026",
+              department: "69",
+              number: "0129319400851AX",
+              transportMode: "routier",
+            },
+            signature: null,
+          },
+          finalProcessingOperation: null,
+        },
       },
-      {
-        name: "Signature de l'enlèvement",
-        bsd: createBsd({
-          customId: "EX-0001-AA",
-          emitter: createEmitter({
-            type: EmitterType.Producer,
-            company: createCompany({
-              siret: "1234567890123",
-              name: "Acme",
-              address: "12 rue Michel Dupont, 69001 Lyon",
-              phone: "06 12 34 56 78",
-              email: "contact@acme.com",
-              contact: "DURAND Marie",
-            }),
-            signature: {
-              date: new Date().toLocaleDateString(),
-              author: "DURAND Marie",
-            },
-          }),
-          temporaryStorage: null,
-          waste: createWaste({
-            code: "01 01 01",
-            consistency: WasteConsistency.Solid,
-          }),
-          adr: "",
-          packages: createPackages({
-            type: PackagesType.Benne,
-            quantity: 1,
-          }),
-          quantity: createQuantity({
-            type: QuantityType.Estimated,
-            tons: 0.5,
-          }),
-          transporter: createTransporter({
-            company: createCompany({
-              siret: "1234567890123",
-              name: "MOVIT",
-              address: "49 rue Mérieu, 69000 Lyon",
-              phone: "06 12 34 56 78",
-              email: "contact@movit.com",
-              contact: "DUPONT Jeanne",
-            }),
-            receipt: createReceipt({
-              number: "1239091023912",
-              department: "69",
-              validityLimit: "01/01/2023",
-              transportMode: "routier",
-            }),
-            signature: {
-              date: new Date().toLocaleDateString(),
-              author: "DUPONT Jeanne",
-            },
-          }),
-          recipient: createRecipient({
-            company: createCompany({
-              siret: "1234567890123",
-              name: "PROCEXOR",
-              address: "3 rue des Acacias, 69000 Lyon",
-              phone: "06 12 34 56 78",
-              email: "contact@procexor.com",
-              contact: "BOYER Baptiste",
-            }),
-            quantity: createQuantity({
-              type: QuantityType.Real,
-              tons: 1,
-            }),
-          }),
+      [
+        produce((step: ExampleStep) => {
+          step.name = "Signature de l'enlèvement";
+          step.bsd.emitter.signature = {
+            date: new Date().toLocaleDateString(),
+            author: step.bsd.emitter.company.contact,
+          };
+          step.bsd.transporter.signature = {
+            date: new Date().toLocaleDateString(),
+            author: step.bsd.transporter.company.contact,
+          };
         }),
-      },
-      {
-        name: "Réception à l'installation de destination",
-        bsd: createBsd({
-          customId: "EX-0001-AA",
-          emitter: createEmitter({
-            type: EmitterType.Producer,
-            company: createCompany({
-              siret: "1234567890123",
-              name: "Acme",
-              address: "12 rue Michel Dupont, 69001 Lyon",
-              phone: "06 12 34 56 78",
-              email: "contact@acme.com",
-              contact: "DURAND Marie",
-            }),
-            signature: {
-              date: new Date().toLocaleDateString(),
-              author: "DURAND Marie",
-            },
-          }),
-          temporaryStorage: null,
-          waste: createWaste({
-            code: "01 01 01",
-            consistency: WasteConsistency.Solid,
-          }),
-          adr: "",
-          packages: createPackages({
-            type: PackagesType.Benne,
-            quantity: 1,
-          }),
-          quantity: createQuantity({
-            type: QuantityType.Estimated,
-            tons: 0.5,
-          }),
-          transporter: createTransporter({
-            company: createCompany({
-              siret: "1234567890123",
-              name: "MOVIT",
-              address: "49 rue Mérieu, 69000 Lyon",
-              phone: "06 12 34 56 78",
-              email: "contact@movit.com",
-              contact: "DUPONT Jeanne",
-            }),
-            receipt: createReceipt({
-              number: "1239091023912",
-              department: "69",
-              validityLimit: "01/01/2023",
-              transportMode: "routier",
-            }),
-            signature: {
-              date: new Date().toLocaleDateString(),
-              author: "DUPONT Jeanne",
-            },
-          }),
-          recipient: createRecipient({
-            arrivedAt: new Date().toLocaleDateString(),
-            company: createCompany({
-              siret: "1234567890123",
-              name: "PROCEXOR",
-              address: "3 rue des Acacias, 69000 Lyon",
-              phone: "06 12 34 56 78",
-              email: "contact@procexor.com",
-              contact: "BOYER Baptiste",
-            }),
-            quantity: createQuantity({
-              type: QuantityType.Real,
-              tons: 1,
-            }),
-          }),
+        produce((step: ExampleStep) => {
+          step.name = "Arrivée à l'installation de destination";
+          step.bsd.recipient.arrivedAt = new Date().toLocaleDateString();
         }),
-      },
-      {
-        name: "Accepté par l'installation de destination",
-        bsd: createBsd({
-          customId: "EX-0001-AA",
-          emitter: createEmitter({
-            type: EmitterType.Producer,
-            company: createCompany({
-              siret: "1234567890123",
-              name: "Acme",
-              address: "12 rue Michel Dupont, 69001 Lyon",
-              phone: "06 12 34 56 78",
-              email: "contact@acme.com",
-              contact: "DURAND Marie",
-            }),
-            signature: {
-              date: new Date().toLocaleDateString(),
-              author: "DURAND Marie",
-            },
-          }),
-          temporaryStorage: null,
-          waste: createWaste({
-            code: "01 01 01",
-            consistency: WasteConsistency.Solid,
-          }),
-          adr: "",
-          packages: createPackages({
-            type: PackagesType.Benne,
-            quantity: 1,
-          }),
-          quantity: createQuantity({
-            type: QuantityType.Estimated,
-            tons: 0.5,
-          }),
-          transporter: createTransporter({
-            company: createCompany({
-              siret: "1234567890123",
-              name: "MOVIT",
-              address: "49 rue Mérieu, 69000 Lyon",
-              phone: "06 12 34 56 78",
-              email: "contact@movit.com",
-              contact: "DUPONT Jeanne",
-            }),
-            receipt: createReceipt({
-              number: "1239091023912",
-              department: "69",
-              validityLimit: "01/01/2023",
-              transportMode: "routier",
-            }),
-            signature: {
-              date: new Date().toLocaleDateString(),
-              author: "DUPONT Jeanne",
-            },
-          }),
-          recipient: createRecipient({
-            arrivedAt: new Date().toLocaleDateString(),
-            signature: {
-              date: new Date().toLocaleDateString(),
-              author: "BOYER Baptiste",
-            },
-            company: createCompany({
-              siret: "1234567890123",
-              name: "PROCEXOR",
-              address: "3 rue des Acacias, 69000 Lyon",
-              phone: "06 12 34 56 78",
-              email: "contact@procexor.com",
-              contact: "BOYER Baptiste",
-            }),
-            quantity: createQuantity({
-              type: QuantityType.Real,
-              tons: 1,
-            }),
-          }),
+        produce((step: ExampleStep) => {
+          step.name = "Accepté par l'installation de destination";
+          step.bsd.recipient.signature = {
+            date: new Date().toLocaleDateString(),
+            author: step.bsd.recipient.company.contact,
+          };
         }),
-      },
-      {
-        name: "Traité par l'installation de destination",
-        bsd: createBsd({
-          customId: "EX-0001-AA",
-          emitter: createEmitter({
-            type: EmitterType.Producer,
-            company: createCompany({
-              siret: "1234567890123",
-              name: "Acme",
-              address: "12 rue Michel Dupont, 69001 Lyon",
-              phone: "06 12 34 56 78",
-              email: "contact@acme.com",
-              contact: "DURAND Marie",
-            }),
-            signature: {
-              date: new Date().toLocaleDateString(),
-              author: "DURAND Marie",
-            },
-          }),
-          temporaryStorage: null,
-          waste: createWaste({
-            code: "01 01 01",
-            consistency: WasteConsistency.Solid,
-          }),
-          adr: "",
-          packages: createPackages({
-            type: PackagesType.Benne,
-            quantity: 1,
-          }),
-          quantity: createQuantity({
-            type: QuantityType.Estimated,
-            tons: 0.5,
-          }),
-          transporter: createTransporter({
-            company: createCompany({
-              siret: "1234567890123",
-              name: "MOVIT",
-              address: "49 rue Mérieu, 69000 Lyon",
-              phone: "06 12 34 56 78",
-              email: "contact@movit.com",
-              contact: "DUPONT Jeanne",
-            }),
-            receipt: createReceipt({
-              number: "1239091023912",
-              department: "69",
-              validityLimit: "01/01/2023",
-              transportMode: "routier",
-            }),
-            signature: {
-              date: new Date().toLocaleDateString(),
-              author: "DUPONT Jeanne",
-            },
-          }),
-          recipient: createRecipient({
-            arrivedAt: new Date().toLocaleDateString(),
-            signature: {
-              date: new Date().toLocaleDateString(),
-              author: "BOYER Baptiste",
-            },
-            company: createCompany({
-              siret: "1234567890123",
-              name: "PROCEXOR",
-              address: "3 rue des Acacias, 69000 Lyon",
-              phone: "06 12 34 56 78",
-              email: "contact@procexor.com",
-              contact: "BOYER Baptiste",
-            }),
-            quantity: createQuantity({
-              type: QuantityType.Real,
-              tons: 1,
-            }),
-          }),
-          finalProcessingOperation: {
+        produce((step: ExampleStep) => {
+          step.name = "Traité par l'installation de destination";
+          step.bsd.finalProcessingOperation = {
             processingOperation: {
               code: "R1",
               description: "Traitement R1",
             },
             signature: {
               date: new Date().toLocaleDateString(),
-              author: "BOYER Baptiste",
+              author: step.bsd.recipient.company.contact,
             },
-          },
+          };
         }),
-      },
-    ],
+      ]
+    ),
   },
   {
     name: "Entreposage provisoire",
     description:
-      "Le déchet part du producteur, est entreposé provisoirement avant d'aller vers l'exutoire.",
-    steps: [
+      "Le déchet part du producteur, passe par un entreposage provisoire puis va à l'exutoire.",
+    steps: createSteps(
       {
-        name: "Création",
-        bsd: createBsd({
-          customId: "EX-0001-AA",
-          emitter: createEmitter({
-            type: EmitterType.Producer,
-            company: createCompany({
-              siret: "1234567890123",
-              name: "Acme",
-              address: "12 rue Michel Dupont, 69001 Lyon",
-              phone: "06 12 34 56 78",
-              email: "contact@acme.com",
-              contact: "DURAND Marie",
-            }),
-          }),
-          temporaryStorage: createTemporaryStorage({
-            company: createCompany({
-              siret: "1234567890123",
-              name: "Regroupeur Inc",
-              address: "3 rue du Général de Gaulle, 69000 Lyon",
-              phone: "06 12 34 56 78",
-              email: "contact@regroupeur-inc.com",
-              contact: "PAYET Jérémy",
-            }),
-            cap: "0001",
-            processingOperation: createProcessingOperation({
-              code: "R1",
-            }),
-          }),
-          waste: createWaste({
-            code: "01 01 01",
-            consistency: WasteConsistency.Solid,
-          }),
-          packages: createPackages({
-            type: PackagesType.Benne,
-            quantity: 1,
-          }),
-          quantity: createQuantity({
-            type: QuantityType.Estimated,
-            tons: 0.5,
-          }),
-          transporter: createTransporter({
-            company: createCompany({
-              siret: "1234567890123",
-              name: "MOVIT",
-              address: "49 rue Mérieu, 69000 Lyon",
-              phone: "06 12 34 56 78",
-              email: "contact@movit.com",
-              contact: "DUPONT Jeanne",
-            }),
-            receipt: createReceipt({
-              number: "1239091023912",
-              department: "69",
-              validityLimit: "01/01/2023",
-              transportMode: "routier",
-            }),
+        name: "Création du BSD",
+        bsd: {
+          customId: "EX-2020-001",
+          emitter: {
+            company: {
+              name: "Garage Bollier",
+              siret: "4920184028394",
+              address: "32 rue André Bollier, 69007 Lyon",
+              contact: "BOYER Jeanne",
+              email: "jeanne@garage-bollier.com",
+              phone: "06 82 92 18 50",
+            },
             signature: null,
-          }),
-          recipient: createRecipient({
+            type: EmitterType.Producer,
+          },
+          temporaryStorage: {
+            company: {
+              name: "José Entrepôts",
+              siret: "01928374618236",
+              address: "67 rue Lemarchand, 69001 Lyon",
+              contact: "LALLEMAND Antoine",
+              email: "antoine@jose-entrepots.com",
+              phone: "54 23 95 01 23",
+            },
+            cap: "",
+            processingOperation: {
+              code: "R12",
+              description: "Regroupement",
+            },
+          },
+          waste: {
+            code: "01 01 01",
+            description: "",
+            consistency: WasteConsistency.Solid,
+          },
+          adr: "",
+          packages: {
+            description: "",
+            quantity: 1,
+            type: PackagesType.Benne,
+          },
+          quantity: {
+            type: QuantityType.Estimated,
+            tons: 0.43,
+          },
+          recipient: {
+            company: {
+              name: "José Collecte d'Huiles",
+              siret: "9481927402817",
+              address: "12 rue Michel Berthelot, 69000 Lyon",
+              contact: "PAYET Jérémy",
+              email: "jeremy@jose-collecte-dhuiles.com",
+              phone: "09 78 23 12 85",
+            },
             arrivedAt: null,
-            company: createCompany({
-              siret: "1234567890123",
-              name: "PROCEXOR",
-              address: "3 rue des Acacias, 69000 Lyon",
-              phone: "06 12 34 56 78",
-              email: "contact@procexor.com",
-              contact: "BOYER Baptiste",
-            }),
-            quantity: createQuantity({
+            quantity: {
               type: QuantityType.Real,
-              tons: 1,
-            }),
-          }),
-        }),
+              tons: 0,
+            },
+            refusal: null,
+            signature: null,
+          },
+          transporter: {
+            company: {
+              name: "Inter Transports",
+              siret: "0419428495012",
+              address: "9 impasse des Acacias, 69001 Lyon",
+              contact: "GRONDIN Camille",
+              email: "camille@inter-transports.com",
+              phone: "02 58 30 12 58",
+            },
+            receipt: {
+              validityLimit: "01/01/2026",
+              department: "69",
+              number: "0129319400851AX",
+              transportMode: "routier",
+            },
+            signature: null,
+          },
+          finalProcessingOperation: null,
+        },
       },
-    ],
+      []
+    ),
   },
 ];
 

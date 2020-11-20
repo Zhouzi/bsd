@@ -15,6 +15,7 @@
     "@types/styled-components": "^5.1.4",
     "diff": "^5.0.0",
     "formik": "^2.2.5",
+    "immer": "^8.0.0",
     "modern-normalize": "^1.0.0",
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
