@@ -44,14 +44,41 @@ const CodeColumn = styled(LayoutColumn)`
   width: 30%;
   color: #f6f7ff;
   background-color: #161c4e;
+  font-size: 0.9rem;
 `;
 
 const ExampleItem = styled.article`
   padding: 1rem 1rem 2rem 1rem;
-  border-bottom: 1px solid #3d3d3d;
 `;
 const ExampleItemName = styled.div`
+  font-size: 1.2rem;
+  margin-bottom: 0.25rem;
   font-weight: bold;
+`;
+const ExampleItemDescription = styled.small`
+  display: block;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+`;
+const ExampleItemStepList = styled.ol`
+  margin: 0;
+  padding: 0 0 0 1rem;
+`;
+const ExampleItemStepListItem = styled.li.attrs({
+  role: "button",
+  tabIndex: 0,
+})<{ active: boolean }>`
+  cursor: pointer;
+  color: #1d68f3;
+  text-decoration: underline;
+  outline: none;
+
+  ${(props) =>
+    props.active &&
+    css`
+      font-weight: bold;
+      text-decoration: none;
+    `}
 `;
 
 const BsdContainer = styled.div`
@@ -393,7 +420,7 @@ function createProcessingOperation({
 
 const EXAMPLES: Example[] = [
   {
-    name: "Simple",
+    name: "Classique",
     description: "Le déchet part du producteur et va directement à l'exutoire.",
     steps: [
       {
@@ -841,10 +868,25 @@ const EXAMPLES: Example[] = [
 ];
 
 function App() {
-  const [state, setState] = React.useState<{ example: Example; step: number }>({
-    example: EXAMPLES[0],
+  const [state, setState] = React.useState<{ example: string; step: number }>({
+    example: EXAMPLES[0].name,
     step: EXAMPLES[0].steps.length - 1,
   });
+  const { previousInitialValues, initialValues } = React.useMemo(() => {
+    const example = EXAMPLES.find((example) => example.name === state.example);
+
+    if (example == null) {
+      throw new Error(`No example found with name "${state.example}"`);
+    }
+
+    const step = example.steps[state.step];
+    const previousStep = example.steps[Math.max(0, state.step - 1)];
+
+    return {
+      previousInitialValues: previousStep.bsd,
+      initialValues: step.bsd,
+    };
+  }, [state.example, state.step]);
 
   return (
     <>
@@ -855,28 +897,29 @@ function App() {
           {EXAMPLES.map((example) => (
             <ExampleItem key={example.name}>
               <ExampleItemName>{example.name}</ExampleItemName>
-              <small>{example.description}</small>
-              <ol>
+              <ExampleItemDescription>
+                {example.description}
+              </ExampleItemDescription>
+              <ExampleItemStepList>
                 {example.steps.map((step, index) => (
-                  <li
+                  <ExampleItemStepListItem
                     key={step.name}
-                    onClick={() => setState({ example, step: index })}
-                    style={{
-                      fontWeight:
-                        state.example === example && state.step === index
-                          ? "bold"
-                          : "normal",
-                    }}
+                    onClick={() =>
+                      setState({ example: example.name, step: index })
+                    }
+                    active={
+                      state.example === example.name && state.step === index
+                    }
                   >
                     {step.name}
-                  </li>
+                  </ExampleItemStepListItem>
                 ))}
-              </ol>
+              </ExampleItemStepList>
             </ExampleItem>
           ))}
         </ExamplesColumn>
         <Formik
-          initialValues={state.example.steps[state.step].bsd}
+          initialValues={initialValues}
           onSubmit={() => {}}
           enableReinitialize
         >
@@ -1832,19 +1875,18 @@ function App() {
               <CodeColumn>
                 <LayoutColumnTitle>Code</LayoutColumnTitle>
                 <CodeContainer>
-                  {diffJson(
-                    state.example.steps[Math.max(0, state.step - 1)].bsd,
-                    values
-                  ).map(({ added, removed, value }, index) => (
-                    <CodeLine
-                      key={index}
-                      variant={
-                        added ? "added" : removed ? "removed" : "unchanged"
-                      }
-                    >
-                      {value}
-                    </CodeLine>
-                  ))}
+                  {diffJson(previousInitialValues, values).map(
+                    ({ added, removed, value }, index) => (
+                      <CodeLine
+                        key={index}
+                        variant={
+                          added ? "added" : removed ? "removed" : "unchanged"
+                        }
+                      >
+                        {value}
+                      </CodeLine>
+                    )
+                  )}
                 </CodeContainer>
               </CodeColumn>
             </>
