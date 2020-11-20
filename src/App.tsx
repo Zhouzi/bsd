@@ -249,6 +249,10 @@ enum EmitterType {
 }
 interface TemporaryStorage {
   company: Company;
+  quantity: Quantity<QuantityType>;
+  arrivedAt: string | null;
+  refusal: string | null;
+  signature: Signature | null;
   cap: string;
   processingOperation: ProcessingOperation;
 }
@@ -433,6 +437,13 @@ const EXAMPLES: Example[] = [
               code: "R12",
               description: "Regroupement",
             },
+            quantity: {
+              type: QuantityType.Estimated,
+              tons: 0,
+            },
+            arrivedAt: null,
+            refusal: null,
+            signature: null,
           },
           waste: {
             code: "01 01 01",
@@ -486,7 +497,57 @@ const EXAMPLES: Example[] = [
           finalProcessingOperation: null,
         },
       },
-      []
+      [
+        produce((step: ExampleStep) => {
+          step.name = "Signature de l'enlèvement";
+          step.bsd.emitter.signature = {
+            date: new Date().toLocaleDateString(),
+            author: step.bsd.emitter.company.contact,
+          };
+          step.bsd.transporter.signature = {
+            date: new Date().toLocaleDateString(),
+            author: step.bsd.transporter.company.contact,
+          };
+        }),
+        produce((step: ExampleStep) => {
+          step.name = "Arrivée à l'entreposage provisoire";
+          step.bsd.temporaryStorage!.arrivedAt = new Date().toLocaleDateString();
+        }),
+        produce((step: ExampleStep) => {
+          step.name = "Accepté par l'entreposage provisoire";
+          step.bsd.temporaryStorage!.signature = {
+            date: new Date().toLocaleDateString(),
+            author: step.bsd.temporaryStorage!.company.contact,
+          };
+        }),
+        produce((step: ExampleStep) => {
+          step.name = "Dépârt de l'entreposage provisoire";
+        }),
+        produce((step: ExampleStep) => {
+          step.name = "Arrivée à l'installation de destination";
+          step.bsd.recipient.arrivedAt = new Date().toLocaleDateString();
+        }),
+        produce((step: ExampleStep) => {
+          step.name = "Accepté par l'installation de destination";
+          step.bsd.recipient.signature = {
+            date: new Date().toLocaleDateString(),
+            author: step.bsd.recipient.company.contact,
+          };
+        }),
+        produce((step: ExampleStep) => {
+          step.name = "Traité par l'installation de destination";
+          step.bsd.finalProcessingOperation = {
+            processingOperation: {
+              code: "R1",
+              description: "Traitement R1",
+            },
+            signature: {
+              date: new Date().toLocaleDateString(),
+              author: step.bsd.recipient.company.contact,
+            },
+          };
+        }),
+      ]
     ),
   },
 ];
@@ -547,7 +608,7 @@ function App() {
           onSubmit={() => {}}
           enableReinitialize
         >
-          {({ initialValues, values, setFieldValue }) => (
+          {({ values, setFieldValue }) => (
             <>
               <BsdColumn>
                 <LayoutColumnTitle>BSD</LayoutColumnTitle>
@@ -1494,6 +1555,237 @@ function App() {
                       <BsdLabel>12. Destination ultérieure prévue</BsdLabel>
                     </BsdBoxColumn>
                   </BsdBox>
+                  {values.temporaryStorage && (
+                    <>
+                      <BsdBox>
+                        <BsdBoxColumn>
+                          <BsdLabel>
+                            13. Réception dans l’installation d’entreposage ou
+                            de reconditionnement
+                          </BsdLabel>
+                          <BsdList>
+                            <BsdListItem>
+                              <label>
+                                N° SIRET :{" "}
+                                <Field
+                                  component={BsdInputField}
+                                  type="text"
+                                  name="temporaryStorage.company.siret"
+                                />
+                              </label>
+                            </BsdListItem>
+                            <BsdListItem>
+                              <label>
+                                NOM :{" "}
+                                <Field
+                                  component={BsdInputField}
+                                  type="text"
+                                  name="temporaryStorage.company.name"
+                                />
+                              </label>
+                            </BsdListItem>
+                            <BsdListItem>
+                              <label>
+                                Adresse :{" "}
+                                <Field
+                                  component={BsdInputField}
+                                  type="text"
+                                  name="temporaryStorage.company.address"
+                                />
+                              </label>
+                            </BsdListItem>
+                            <BsdListItem>
+                              <label>
+                                Tél :{" "}
+                                <Field
+                                  component={BsdInputField}
+                                  type="phone"
+                                  name="temporaryStorage.company.phone"
+                                />
+                              </label>
+                            </BsdListItem>
+                            <BsdListItem>
+                              <label>
+                                Mél :{" "}
+                                <Field
+                                  component={BsdInputField}
+                                  type="email"
+                                  name="temporaryStorage.company.email"
+                                />
+                              </label>
+                            </BsdListItem>
+                            <BsdListItem>
+                              <label>
+                                Personne à contacter :{" "}
+                                <Field
+                                  component={BsdInputField}
+                                  type="text"
+                                  name="temporaryStorage.company.contact"
+                                />
+                              </label>
+                            </BsdListItem>
+                          </BsdList>
+                          <BsdList>
+                            <BsdListItem>Quantité présentée :</BsdListItem>
+                            <BsdListItem>
+                              <label>
+                                <Field
+                                  type="radio"
+                                  name="temporaryStorage.quantity.type"
+                                  value={QuantityType.Estimated}
+                                />{" "}
+                                Estimée
+                              </label>
+                            </BsdListItem>
+                            <BsdListItem>
+                              <label>
+                                <Field
+                                  type="radio"
+                                  name="temporaryStorage.quantity.type"
+                                  value={QuantityType.Real}
+                                />{" "}
+                                Réel
+                              </label>
+                            </BsdListItem>
+                            <BsdListItem>
+                              <Field
+                                component={BsdInputField}
+                                type="number"
+                                name="temporaryStorage.quantity.tons"
+                                min="0"
+                                step="0.001"
+                              />{" "}
+                              tonnes
+                            </BsdListItem>
+                          </BsdList>
+                          <BsdList>
+                            <BsdListItem>
+                              <label>
+                                Date de présentation :{" "}
+                                <Field
+                                  component={BsdInputField}
+                                  type="text"
+                                  name="temporaryStorage.arrivedAt"
+                                />
+                              </label>
+                            </BsdListItem>
+                          </BsdList>
+                          <BsdList orientation="horizontal">
+                            <BsdListItem>Lot accepté :</BsdListItem>
+                            <BsdListItem>
+                              <label>
+                                <input
+                                  type="radio"
+                                  name="temporaryStorage.refusal"
+                                  onChange={() =>
+                                    setFieldValue(
+                                      "temporaryStorage.refusal",
+                                      null
+                                    )
+                                  }
+                                  checked={values.recipient.refusal == null}
+                                />{" "}
+                                Oui
+                              </label>
+                            </BsdListItem>
+                            <BsdListItem>
+                              <label>
+                                <input
+                                  type="radio"
+                                  name="temporaryStorage.refusal"
+                                  onChange={() =>
+                                    setFieldValue(
+                                      "temporaryStorage.refusal",
+                                      "Préciser la raison du refus"
+                                    )
+                                  }
+                                  checked={
+                                    values.temporaryStorage.refusal != null
+                                  }
+                                />{" "}
+                                Non
+                              </label>
+                            </BsdListItem>
+                          </BsdList>
+                          {values.temporaryStorage.refusal != null && (
+                            <BsdList>
+                              <BsdListItem>
+                                <label>
+                                  Motif du refus :{" "}
+                                  <Field
+                                    component={BsdInputField}
+                                    type="text"
+                                    name="temporaryStorage.refusal"
+                                  />
+                                </label>
+                              </BsdListItem>
+                            </BsdList>
+                          )}
+                          <BsdList>
+                            {values.temporaryStorage.signature ? (
+                              <>
+                                <BsdListItem>
+                                  <label>
+                                    Date de prise en charge :{" "}
+                                    <Field
+                                      component={BsdInputField}
+                                      type="string"
+                                      name="temporaryStorage.signature.date"
+                                    />
+                                  </label>
+                                </BsdListItem>
+                                <BsdListItem>
+                                  <label>
+                                    Signature :{" "}
+                                    <Field
+                                      component={BsdInputField}
+                                      type="string"
+                                      name="temporaryStorage.signature.author"
+                                    />
+                                  </label>
+                                </BsdListItem>
+                                <BsdListItem>
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setFieldValue(
+                                        "temporaryStorage.signature",
+                                        null
+                                      )
+                                    }
+                                  >
+                                    Annuler
+                                  </button>
+                                </BsdListItem>
+                              </>
+                            ) : (
+                              <BsdListItem>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setFieldValue(
+                                      "temporaryStorage.signature",
+                                      {
+                                        date: new Date().toLocaleDateString(),
+                                        author: "VOTRE NOM",
+                                      }
+                                    )
+                                  }
+                                >
+                                  Signer la prise en charge
+                                </button>
+                              </BsdListItem>
+                            )}
+                          </BsdList>
+                        </BsdBoxColumn>
+                        <BsdBoxColumn>
+                          <BsdLabel>
+                            14. Installation de destination prévue
+                          </BsdLabel>
+                        </BsdBoxColumn>
+                      </BsdBox>
+                    </>
+                  )}
                 </BsdContainer>
               </BsdColumn>
               <CodeColumn>
