@@ -555,7 +555,7 @@ const EXAMPLES: Example[] = [
 function App() {
   const [state, setState] = React.useState<{ example: string; step: number }>({
     example: EXAMPLES[0].name,
-    step: EXAMPLES[0].steps.length - 1,
+    step: 0,
   });
   const { previousInitialValues, initialValues } = React.useMemo(() => {
     const example = EXAMPLES.find((example) => example.name === state.example);
