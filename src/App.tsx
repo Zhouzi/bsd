@@ -183,7 +183,7 @@ interface Bsd {
   quantity: Quantity;
   transporter: Transporter;
   recipient: Recipient;
-  treatment: Treatment | null;
+  treatment: Treatment;
 }
 interface Recipient {
   company: Company;
@@ -247,7 +247,7 @@ enum EmitterType {
 interface TemporaryStorage {
   company: Company;
   reception: Reception | null;
-  treatment: Treatment | null;
+  treatment: Treatment;
   cap: string;
 }
 interface Reception {
@@ -358,7 +358,13 @@ const EXAMPLES: Example[] = [
             },
             signature: null,
           },
-          treatment: null,
+          treatment: {
+            operation: {
+              code: "R1",
+              description: "Traitement R1",
+            },
+            signature: null,
+          },
         },
       },
       [
@@ -395,15 +401,9 @@ const EXAMPLES: Example[] = [
         }),
         produce((step: ExampleStep) => {
           step.name = "Traité par l'installation de destination";
-          step.bsd.treatment = {
-            operation: {
-              code: "R1",
-              description: "Traitement R1",
-            },
-            signature: {
-              date: new Date().toLocaleDateString(),
-              author: step.bsd.recipient.company.contact,
-            },
+          step.bsd.treatment.signature = {
+            date: new Date().toLocaleDateString(),
+            author: step.bsd.recipient.company.contact,
           };
         }),
       ]
@@ -492,7 +492,13 @@ const EXAMPLES: Example[] = [
             },
             signature: null,
           },
-          treatment: null,
+          treatment: {
+            operation: {
+              code: "R1",
+              description: "Traitement R1",
+            },
+            signature: null,
+          },
         },
       },
       [
@@ -529,15 +535,9 @@ const EXAMPLES: Example[] = [
         }),
         produce((step: ExampleStep) => {
           step.name = "Traité par l'entreposage provisoire";
-          step.bsd.temporaryStorage!.treatment = {
-            operation: {
-              code: "R12",
-              description: "",
-            },
-            signature: {
-              date: new Date().toLocaleDateString(),
-              author: step.bsd.temporaryStorage!.company.contact,
-            },
+          step.bsd.temporaryStorage!.treatment.signature = {
+            date: new Date().toLocaleDateString(),
+            author: step.bsd.temporaryStorage!.company.contact,
           };
         }),
         produce((step: ExampleStep) => {
@@ -565,15 +565,9 @@ const EXAMPLES: Example[] = [
         }),
         produce((step: ExampleStep) => {
           step.name = "Traité par l'installation de destination";
-          step.bsd.treatment = {
-            operation: {
-              code: "R1",
-              description: "Traitement R1",
-            },
-            signature: {
-              date: new Date().toLocaleDateString(),
-              author: step.bsd.recipient.company.contact,
-            },
+          step.bsd.treatment.signature = {
+            date: new Date().toLocaleDateString(),
+            author: step.bsd.recipient.company.contact,
           };
         }),
       ]
@@ -1220,7 +1214,7 @@ function App() {
                                   setFieldValue("transporter.signature", null)
                                 }
                               >
-                                Annuler la prise en charge
+                                Annuler l'enlèvement
                               </button>
                             </BsdListItem>
                           </>
@@ -1235,7 +1229,7 @@ function App() {
                                 })
                               }
                             >
-                              Signer la prise en charge
+                              Signer l'enlèvement
                             </button>
                           </BsdListItem>
                         )}
@@ -1284,7 +1278,7 @@ function App() {
                                   setFieldValue("emitter.signature", null)
                                 }
                               >
-                                Annuler la prise en charge
+                                Annuler l'enlèvement
                               </button>
                             </BsdListItem>
                           </>
@@ -1299,7 +1293,7 @@ function App() {
                                 })
                               }
                             >
-                              Signer la prise en charge
+                              Signer l'enlèvement
                             </button>
                           </BsdListItem>
                         )}
@@ -1376,7 +1370,6 @@ function App() {
                       {values.recipient.reception ? (
                         <>
                           <BsdList>
-                            {/* FIXME: editing this field creates an object that doesn't comply with the Reception interface */}
                             <BsdListItem>
                               <label>
                                 Quantité réelle présentée :{" "}
@@ -1544,31 +1537,31 @@ function App() {
                     </BsdBoxColumn>
                     <BsdBoxColumn>
                       <BsdLabel>11. Réalisation de l’opération</BsdLabel>
-                      {values.treatment ? (
-                        <>
-                          <BsdList>
-                            <BsdListItem>
-                              <label>
-                                Code D/R :{" "}
-                                <Field
-                                  component={BsdInputField}
-                                  type="text"
-                                  name="treatment.operation.code"
-                                />
-                              </label>
-                            </BsdListItem>
-                            <BsdListItem>
-                              <label>
-                                Description :{" "}
-                                <Field
-                                  component={BsdInputField}
-                                  type="text"
-                                  name="treatment.operation.description"
-                                />
-                              </label>
-                            </BsdListItem>
-                          </BsdList>
-                          <BsdList>
+                      <BsdList>
+                        <BsdListItem>
+                          <label>
+                            Code D/R :{" "}
+                            <Field
+                              component={BsdInputField}
+                              type="text"
+                              name="treatment.operation.code"
+                            />
+                          </label>
+                        </BsdListItem>
+                        <BsdListItem>
+                          <label>
+                            Description :{" "}
+                            <Field
+                              component={BsdInputField}
+                              type="text"
+                              name="treatment.operation.description"
+                            />
+                          </label>
+                        </BsdListItem>
+                      </BsdList>
+                      <BsdList>
+                        {values.treatment.signature ? (
+                          <>
                             <BsdListItem>
                               Je soussigné certifie que l’opération ci-dessus a
                               été effectuée
@@ -1596,36 +1589,30 @@ function App() {
                             <BsdListItem>
                               <button
                                 type="button"
-                                onClick={() => setFieldValue("treatment", null)}
+                                onClick={() =>
+                                  setFieldValue("treatment.signature", null)
+                                }
                               >
                                 Annuler la réalisation de l'opération
                               </button>
                             </BsdListItem>
-                          </BsdList>
-                        </>
-                      ) : (
-                        <BsdList>
+                          </>
+                        ) : (
                           <BsdListItem>
                             <button
                               type="button"
                               onClick={() =>
-                                setFieldValue("treatment", {
-                                  operation: {
-                                    code: "",
-                                    description: "",
-                                  },
-                                  signature: {
-                                    date: new Date().toLocaleDateString(),
-                                    author: values.recipient.company.contact,
-                                  },
+                                setFieldValue("treatment.signature", {
+                                  date: new Date().toLocaleDateString(),
+                                  author: values.recipient.company.contact,
                                 })
                               }
                             >
                               Signer la réalisation de l'opération
                             </button>
                           </BsdListItem>
-                        </BsdList>
-                      )}
+                        )}
+                      </BsdList>
                     </BsdBoxColumn>
                   </BsdBox>
                   <BsdBox>
