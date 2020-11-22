@@ -207,7 +207,7 @@ interface Signature {
 }
 interface TransporterReceipt {
   number: string;
-  validityLimit: string;
+  expiresAt: string;
   transportMode: string;
   department: string;
 }
@@ -357,7 +357,7 @@ const EXAMPLES: Example[] = [
               phone: "02 58 30 12 58",
             },
             receipt: {
-              validityLimit: "01/01/2026",
+              expiresAt: "01/01/2026",
               department: "69",
               number: "0129319400851AX",
               transportMode: "routier",
@@ -491,7 +491,7 @@ const EXAMPLES: Example[] = [
               phone: "02 58 30 12 58",
             },
             receipt: {
-              validityLimit: "01/01/2026",
+              expiresAt: "01/01/2026",
               department: "69",
               number: "0129319400851AX",
               transportMode: "routier",
@@ -1149,7 +1149,7 @@ function App() {
                             <Field
                               component={BsdInputField}
                               type="text"
-                              name="transporter.receipt.validityLimit"
+                              name="transporter.receipt.expiresAt"
                             />
                           </label>
                         </BsdListItem>
