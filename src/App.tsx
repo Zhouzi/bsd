@@ -183,11 +183,11 @@ interface Bsd {
   quantity: Quantity;
   transporter: Transporter;
   recipient: Recipient;
-  treatment: Treatment;
 }
 interface Recipient {
   company: Company;
   reception: Reception | null;
+  treatment: Treatment;
 }
 interface Transporter {
   company: Company;
@@ -340,6 +340,13 @@ const EXAMPLES: Example[] = [
               phone: "09 78 23 12 85",
             },
             reception: null,
+            treatment: {
+              operation: {
+                code: "R1",
+                description: "Traitement R1",
+              },
+              signature: null,
+            },
           },
           transporter: {
             company: {
@@ -355,13 +362,6 @@ const EXAMPLES: Example[] = [
               department: "69",
               number: "0129319400851AX",
               transportMode: "routier",
-            },
-            signature: null,
-          },
-          treatment: {
-            operation: {
-              code: "R1",
-              description: "Traitement R1",
             },
             signature: null,
           },
@@ -401,7 +401,7 @@ const EXAMPLES: Example[] = [
         }),
         produce((step: ExampleStep) => {
           step.name = "Traité par l'installation de destination";
-          step.bsd.treatment.signature = {
+          step.bsd.recipient.treatment.signature = {
             date: new Date().toLocaleDateString(),
             author: step.bsd.recipient.company.contact,
           };
@@ -474,6 +474,13 @@ const EXAMPLES: Example[] = [
               phone: "09 78 23 12 85",
             },
             reception: null,
+            treatment: {
+              operation: {
+                code: "R1",
+                description: "Traitement R1",
+              },
+              signature: null,
+            },
           },
           transporter: {
             company: {
@@ -489,13 +496,6 @@ const EXAMPLES: Example[] = [
               department: "69",
               number: "0129319400851AX",
               transportMode: "routier",
-            },
-            signature: null,
-          },
-          treatment: {
-            operation: {
-              code: "R1",
-              description: "Traitement R1",
             },
             signature: null,
           },
@@ -565,7 +565,7 @@ const EXAMPLES: Example[] = [
         }),
         produce((step: ExampleStep) => {
           step.name = "Traité par l'installation de destination";
-          step.bsd.treatment.signature = {
+          step.bsd.recipient.treatment.signature = {
             date: new Date().toLocaleDateString(),
             author: step.bsd.recipient.company.contact,
           };
@@ -1544,7 +1544,7 @@ function App() {
                             <Field
                               component={BsdInputField}
                               type="text"
-                              name="treatment.operation.code"
+                              name="recipient.treatment.operation.code"
                             />
                           </label>
                         </BsdListItem>
@@ -1554,13 +1554,13 @@ function App() {
                             <Field
                               component={BsdInputField}
                               type="text"
-                              name="treatment.operation.description"
+                              name="recipient.treatment.operation.description"
                             />
                           </label>
                         </BsdListItem>
                       </BsdList>
                       <BsdList>
-                        {values.treatment.signature ? (
+                        {values.recipient.treatment.signature ? (
                           <>
                             <BsdListItem>
                               Je soussigné certifie que l’opération ci-dessus a
@@ -1572,7 +1572,7 @@ function App() {
                                 <Field
                                   component={BsdInputField}
                                   type="string"
-                                  name="treatment.signature.date"
+                                  name="recipient.treatment.signature.date"
                                 />
                               </label>
                             </BsdListItem>
@@ -1582,7 +1582,7 @@ function App() {
                                 <Field
                                   component={BsdInputField}
                                   type="string"
-                                  name="treatment.signature.author"
+                                  name="recipient.treatment.signature.author"
                                 />
                               </label>
                             </BsdListItem>
@@ -1590,7 +1590,10 @@ function App() {
                               <button
                                 type="button"
                                 onClick={() =>
-                                  setFieldValue("treatment.signature", null)
+                                  setFieldValue(
+                                    "recipient.treatment.signature",
+                                    null
+                                  )
                                 }
                               >
                                 Annuler la réalisation de l'opération
@@ -1602,7 +1605,7 @@ function App() {
                             <button
                               type="button"
                               onClick={() =>
-                                setFieldValue("treatment.signature", {
+                                setFieldValue("recipient.treatment.signature", {
                                   date: new Date().toLocaleDateString(),
                                   author: values.recipient.company.contact,
                                 })
