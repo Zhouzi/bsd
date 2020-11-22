@@ -1231,7 +1231,7 @@ function App() {
                               onClick={() =>
                                 setFieldValue("transporter.signature", {
                                   date: new Date().toLocaleDateString(),
-                                  author: "VOTRE NOM",
+                                  author: values.transporter.company.contact,
                                 })
                               }
                             >
@@ -1295,7 +1295,7 @@ function App() {
                               onClick={() =>
                                 setFieldValue("emitter.signature", {
                                   date: new Date().toLocaleDateString(),
-                                  author: "VOTRE NOM",
+                                  author: values.emitter.company.contact,
                                 })
                               }
                             >
@@ -1509,7 +1509,8 @@ function App() {
                                         "recipient.reception.signature",
                                         {
                                           date: new Date().toLocaleDateString(),
-                                          author: "VOTRE NOM",
+                                          author:
+                                            values.recipient.company.contact,
                                         }
                                       )
                                     }
@@ -1615,7 +1616,7 @@ function App() {
                                   },
                                   signature: {
                                     date: new Date().toLocaleDateString(),
-                                    author: "VOTRE NOM",
+                                    author: values.recipient.company.contact,
                                   },
                                 })
                               }
@@ -1852,7 +1853,8 @@ function App() {
                                           "temporaryStorage.reception.signature",
                                           {
                                             date: new Date().toLocaleDateString(),
-                                            author: "VOTRE NOM",
+                                            author: values.temporaryStorage!
+                                              .company.contact,
                                           }
                                         )
                                       }
