@@ -180,14 +180,14 @@ interface Bsd {
   waste: Waste;
   adr: string;
   packages: Packages;
-  quantity: Quantity<QuantityType>;
+  quantity: Quantity;
   transporter: Transporter;
   recipient: Recipient;
   treatment: Treatment | null;
 }
 interface Recipient {
   company: Company;
-  quantity: Quantity<QuantityType.Real>;
+  quantity: Quantity;
   arrivedAt: string | null;
   refusal: string | null;
   signature: Signature | null;
@@ -207,8 +207,8 @@ interface TransporterReceipt {
   transportMode: string;
   department: string;
 }
-interface Quantity<T extends QuantityType> {
-  type: T;
+interface Quantity {
+  type: QuantityType;
   tons: number;
 }
 enum QuantityType {
@@ -249,7 +249,7 @@ enum EmitterType {
 }
 interface TemporaryStorage {
   company: Company;
-  quantity: Quantity<QuantityType>;
+  quantity: Quantity;
   arrivedAt: string | null;
   refusal: string | null;
   signature: Signature | null;
