@@ -183,11 +183,7 @@ interface Bsd {
   quantity: Quantity<QuantityType>;
   transporter: Transporter;
   recipient: Recipient;
-  finalProcessingOperation: FinalProcessingOperation | null;
-}
-interface FinalProcessingOperation {
-  processingOperation: ProcessingOperation;
-  signature: Signature;
+  treatment: Treatment | null;
 }
 interface Recipient {
   company: Company;
@@ -258,9 +254,13 @@ interface TemporaryStorage {
   refusal: string | null;
   signature: Signature | null;
   cap: string;
-  processingOperation: ProcessingOperation;
+  treatment: Treatment | null;
 }
-interface ProcessingOperation {
+interface Treatment {
+  operation: TreatmentOperation;
+  signature: Signature | null;
+}
+interface TreatmentOperation {
   code: string;
   description: string;
 }
@@ -364,7 +364,7 @@ const EXAMPLES: Example[] = [
             },
             signature: null,
           },
-          finalProcessingOperation: null,
+          treatment: null,
         },
       },
       [
@@ -392,8 +392,8 @@ const EXAMPLES: Example[] = [
         }),
         produce((step: ExampleStep) => {
           step.name = "Traité par l'installation de destination";
-          step.bsd.finalProcessingOperation = {
-            processingOperation: {
+          step.bsd.treatment = {
+            operation: {
               code: "R1",
               description: "Traitement R1",
             },
@@ -437,10 +437,6 @@ const EXAMPLES: Example[] = [
               phone: "54 23 95 01 23",
             },
             cap: "",
-            processingOperation: {
-              code: "R12",
-              description: "Regroupement",
-            },
             quantity: {
               type: QuantityType.Estimated,
               tons: 0,
@@ -448,6 +444,13 @@ const EXAMPLES: Example[] = [
             arrivedAt: null,
             refusal: null,
             signature: null,
+            treatment: {
+              operation: {
+                code: "R12",
+                description: "Regroupement",
+              },
+              signature: null,
+            },
           },
           waste: {
             code: "01 01 01",
@@ -498,7 +501,7 @@ const EXAMPLES: Example[] = [
             },
             signature: null,
           },
-          finalProcessingOperation: null,
+          treatment: null,
         },
       },
       [
@@ -529,6 +532,19 @@ const EXAMPLES: Example[] = [
           };
         }),
         produce((step: ExampleStep) => {
+          step.name = "Traité par l'entreposage provisoire";
+          step.bsd.temporaryStorage!.treatment = {
+            operation: {
+              code: "R12",
+              description: "Regroupement",
+            },
+            signature: {
+              date: new Date().toLocaleDateString(),
+              author: step.bsd.temporaryStorage!.company.contact,
+            },
+          };
+        }),
+        produce((step: ExampleStep) => {
           step.name = "Dépârt de l'entreposage provisoire (incomplet)";
         }),
         produce((step: ExampleStep) => {
@@ -544,8 +560,8 @@ const EXAMPLES: Example[] = [
         }),
         produce((step: ExampleStep) => {
           step.name = "Traité par l'installation de destination";
-          step.bsd.finalProcessingOperation = {
-            processingOperation: {
+          step.bsd.treatment = {
+            operation: {
               code: "R1",
               description: "Traitement R1",
             },
@@ -765,8 +781,12 @@ function App() {
                                     contact: "",
                                   },
                                   cap: "",
-                                  processingOperation: {
-                                    code: "",
+                                  treatment: {
+                                    operation: {
+                                      code: "R12",
+                                      description: "",
+                                    },
+                                    signature: null,
                                   },
                                 });
                               }}
@@ -873,7 +893,7 @@ function App() {
                                 <Field
                                   component={BsdInputField}
                                   type="text"
-                                  name="temporaryStorage.processingOperation.code"
+                                  name="temporaryStorage.treatment.operation.code"
                                 />
                               </label>
                             </BsdListItem>
@@ -1469,7 +1489,7 @@ function App() {
                     </BsdBoxColumn>
                     <BsdBoxColumn>
                       <BsdLabel>11. Réalisation de l’opération</BsdLabel>
-                      {values.finalProcessingOperation ? (
+                      {values.treatment ? (
                         <>
                           <BsdList>
                             <BsdListItem>
@@ -1478,7 +1498,7 @@ function App() {
                                 <Field
                                   component={BsdInputField}
                                   type="text"
-                                  name="finalProcessingOperation.processingOperation.code"
+                                  name="treatment.operation.code"
                                 />
                               </label>
                             </BsdListItem>
@@ -1488,7 +1508,7 @@ function App() {
                                 <Field
                                   component={BsdInputField}
                                   type="text"
-                                  name="finalProcessingOperation.processingOperation.description"
+                                  name="treatment.operation.description"
                                 />
                               </label>
                             </BsdListItem>
@@ -1504,7 +1524,7 @@ function App() {
                                 <Field
                                   component={BsdInputField}
                                   type="string"
-                                  name="finalProcessingOperation.signature.date"
+                                  name="treatment.signature.date"
                                 />
                               </label>
                             </BsdListItem>
@@ -1514,19 +1534,14 @@ function App() {
                                 <Field
                                   component={BsdInputField}
                                   type="string"
-                                  name="finalProcessingOperation.signature.author"
+                                  name="treatment.signature.author"
                                 />
                               </label>
                             </BsdListItem>
                             <BsdListItem>
                               <button
                                 type="button"
-                                onClick={() =>
-                                  setFieldValue(
-                                    "finalProcessingOperation",
-                                    null
-                                  )
-                                }
+                                onClick={() => setFieldValue("treatment", null)}
                               >
                                 Annuler
                               </button>
@@ -1539,8 +1554,8 @@ function App() {
                             <button
                               type="button"
                               onClick={() =>
-                                setFieldValue("finalProcessingOperation", {
-                                  processingOperation: {
+                                setFieldValue("treatment", {
+                                  operation: {
                                     code: "",
                                     description: "",
                                   },
