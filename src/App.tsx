@@ -78,7 +78,7 @@ interface ScenarioStep {
 
 function produceScenarioSteps(
   firstStep: ScenarioStep,
-  producers: Array<(previousStep: ScenarioStep) => ScenarioStep>
+  producers: Array<(previousStep: ScenarioStep) => void>
 ): ScenarioStep[] {
   return producers
     .map((fn) => produce(fn))
@@ -133,7 +133,7 @@ const SCENARIOS: Scenario[] = [
             signature: null,
             nextTreatmentOperation: {
               code: "R1",
-              description: "",
+              description: "Traitement R1",
             },
           },
           temporaryStorage: null,
@@ -165,7 +165,179 @@ const SCENARIOS: Scenario[] = [
           },
         },
       },
-      []
+      [
+        (step) => {
+          step.name = "Signature de l'enlèvement";
+          step.bsd.emitter.signature = {
+            author: step.bsd.emitter.company.contact,
+            date: new Date().toLocaleDateString(),
+          };
+          step.bsd.recipient.transporter.signature = {
+            author: step.bsd.recipient.transporter.company.contact,
+            date: new Date().toLocaleDateString(),
+          };
+        },
+        (step) => {
+          step.name = "Arrivée à l'installation de destination";
+          step.bsd.recipient.reception = {
+            date: new Date().toLocaleDateString(),
+            refusal: null,
+            signature: null,
+            weight: step.bsd.recipient.transporter.weight,
+          };
+        },
+        (step) => {
+          step.name = "Accepté par l'installation de destination";
+          step.bsd.recipient.reception!.signature = {
+            author: step.bsd.recipient.company.contact,
+            date: new Date().toLocaleDateString(),
+          };
+        },
+        (step) => {
+          step.name = "Traité par l'installation de destination";
+          step.bsd.recipient.treatment = {
+            operation: step.bsd.emitter.nextTreatmentOperation,
+            signature: {
+              author: step.bsd.recipient.company.contact,
+              date: new Date().toLocaleDateString(),
+            },
+          };
+        },
+      ]
+    ),
+  },
+  {
+    name: "Entreposage provisoire",
+    description:
+      "Le déchet passe par une étape d'entreposage provisoire avant d'aller à l'exutoire.",
+    steps: produceScenarioSteps(
+      {
+        name: "Création du BSD",
+        bsd: {
+          customId: "EX-00000001",
+          emitter: {
+            type: EmitterType.Producer,
+            company: EMITTER_COMPANY,
+            signature: null,
+            nextTreatmentOperation: {
+              code: "R12",
+              description: "Regroupement",
+            },
+          },
+          temporaryStorage: {
+            company: TRANSPORTER_COMPANY,
+            nextTreatmentOperation: {
+              code: "R1",
+              description: "Traitement R1",
+            },
+            treatment: null,
+            reception: null,
+            signature: null,
+            transporter: {
+              company: TRANSPORTER_COMPANY,
+              packages: [],
+              receipt: TRANSPORTER_RECEIPT,
+              signature: null,
+              weight: {
+                type: WasteWeightType.Estimate,
+                tons: 0.5,
+              },
+            },
+          },
+          recipient: {
+            company: RECIPIENT_COMPANY,
+            transporter: {
+              company: TRANSPORTER_COMPANY,
+              receipt: TRANSPORTER_RECEIPT,
+              packages: [
+                {
+                  type: TransporterPackageType.Benne,
+                  quantity: 1,
+                },
+              ],
+              weight: {
+                type: WasteWeightType.Estimate,
+                tons: 0.5,
+              },
+              signature: null,
+            },
+            reception: null,
+            treatment: null,
+          },
+          waste: {
+            adr: "",
+            code: "01 01 01",
+            description: "Débris de métaux",
+            consistency: WasteConsistency.Solid,
+          },
+        },
+      },
+      [
+        (step) => {
+          step.name = "Signature de l'enlèvement";
+          step.bsd.emitter.signature = {
+            author: step.bsd.emitter.company.contact,
+            date: new Date().toLocaleDateString(),
+          };
+          step.bsd.temporaryStorage!.transporter.signature = {
+            author: step.bsd.temporaryStorage!.transporter.company.contact,
+            date: new Date().toLocaleDateString(),
+          };
+        },
+        (step) => {
+          step.name = "Arrivée à l'entreposage provisoire";
+          step.bsd.temporaryStorage!.reception = {
+            date: new Date().toLocaleDateString(),
+            refusal: null,
+            signature: null,
+            weight: step.bsd.temporaryStorage!.transporter.weight,
+          };
+        },
+        (step) => {
+          step.name = "Accepté par l'entreposage provisoire";
+          step.bsd.temporaryStorage!.reception!.signature = {
+            author: step.bsd.temporaryStorage!.company.contact,
+            date: new Date().toLocaleDateString(),
+          };
+        },
+        (step) => {
+          step.name = "Dépârt de l'entreposage provisoire";
+          step.bsd.temporaryStorage!.signature = {
+            author: step.bsd.temporaryStorage!.company.contact,
+            date: new Date().toLocaleDateString(),
+          };
+          step.bsd.recipient.transporter.signature = {
+            author: step.bsd.recipient.transporter.company.contact,
+            date: new Date().toLocaleDateString(),
+          };
+        },
+        (step) => {
+          step.name = "Arrivée à l'installation de destination";
+          step.bsd.recipient.reception = {
+            date: new Date().toLocaleDateString(),
+            refusal: null,
+            signature: null,
+            weight: step.bsd.recipient.transporter.weight,
+          };
+        },
+        (step) => {
+          step.name = "Accepté par l'installation de destination";
+          step.bsd.recipient.reception!.signature = {
+            author: step.bsd.recipient.company.contact,
+            date: new Date().toLocaleDateString(),
+          };
+        },
+        (step) => {
+          step.name = "Traité par l'installation de destination";
+          step.bsd.recipient.treatment = {
+            operation: step.bsd.emitter.nextTreatmentOperation,
+            signature: {
+              author: step.bsd.recipient.company.contact,
+              date: new Date().toLocaleDateString(),
+            },
+          };
+        },
+      ]
     ),
   },
 ];

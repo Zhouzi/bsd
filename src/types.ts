@@ -38,8 +38,16 @@ export enum EmitterType {
 interface Transporter {
   company: Company;
   receipt: TransporterReceipt;
-  packages: TransporterPackage[];
+
+  // When creating the BSD, the producer cannot estimate the weight of the packages
+  // that are leaving the temporary storage to the final recipient
+  // So the weight should probably be nullable
+  // It would also make it possible for the producer to not make any estimate
+  // and leave it to the transporter when they arrive on the site
   weight: WasteWeight;
+  // The packages are also unknown but that's ok since it's an array and thus can be empty
+  packages: TransporterPackage[];
+
   signature: Signature | null;
 }
 export interface TransporterReceipt {

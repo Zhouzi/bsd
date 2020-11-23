@@ -473,12 +473,9 @@ export function BsdDocument() {
                       date: new Date().toLocaleDateString(),
                       refusal: null,
                       signature: null,
-                      weight: {
-                        type: WasteWeightType.Real,
-                        tons:
-                          values.temporaryStorage?.transporter.weight.tons ??
-                          values.recipient.transporter.weight.tons,
-                      },
+                      weight:
+                        values.temporaryStorage?.reception?.weight ??
+                        values.recipient.transporter.weight,
                     };
                     setFieldValue("recipient.reception", reception);
                   }}
@@ -707,10 +704,7 @@ export function BsdDocument() {
                           date: new Date().toLocaleDateString(),
                           refusal: null,
                           signature: null,
-                          weight: {
-                            type: WasteWeightType.Estimate,
-                            tons: values.recipient.transporter.weight.tons,
-                          },
+                          weight: values.recipient.transporter.weight,
                         };
                         setFieldValue("temporaryStorage.reception", reception);
                       }}
