@@ -12,14 +12,16 @@ import {
   ScenarioItemStepList,
   ScenarioItemStepListItem,
 } from "./components";
+import { BsdDocument } from "./containers";
 import {
   Bsd,
   EmitterType,
+  TransporterPackageType,
   WasteConsistency,
-  PackagesType,
-  QuantityType,
-  BsdDocument,
-} from "./containers";
+  WasteWeightType,
+  Company,
+  TransporterReceipt,
+} from "./types";
 
 const GlobalStyle = createGlobalStyle`
   html {
@@ -78,11 +80,43 @@ function produceScenarioSteps(
   firstStep: ScenarioStep,
   producers: Array<(previousStep: ScenarioStep) => ScenarioStep>
 ): ScenarioStep[] {
-  return producers.reduce(
-    (acc, producer) => acc.concat([producer(acc[acc.length - 1])]),
-    [firstStep]
-  );
+  return producers
+    .map((fn) => produce(fn))
+    .reduce((acc, producer) => acc.concat([producer(acc[acc.length - 1])]), [
+      firstStep,
+    ]);
 }
+
+const EMITTER_COMPANY: Company = {
+  siret: "9012931804340",
+  name: "PRODUCTEUR BOLLIER",
+  address: "92 rue Michel Leperlier, 69001 Lyon",
+  contact: "GRONDIN Jeanne",
+  email: "jeanne@producteur-bollier.com",
+  phone: "06 23 53 12 60",
+};
+const TRANSPORTER_COMPANY: Company = {
+  siret: "8059380912480",
+  name: "TRANSPORTEUR JOSÉ",
+  address: "9 rue Lemarchand, 69000 Lyon",
+  contact: "PAYET Jérémy",
+  email: "jeremy@transporteur-jose.com",
+  phone: "06 98 23 59 43",
+};
+const TRANSPORTER_RECEIPT: TransporterReceipt = {
+  number: "0129301930219",
+  department: "69",
+  expiresAt: "01/01/2026",
+  mode: "routier",
+};
+const RECIPIENT_COMPANY: Company = {
+  siret: "8210328194719",
+  name: "COLLECTEUR DUPONT",
+  address: "523 rue du Maréchal, 69000 Lyon",
+  contact: "RIVIERE Camille",
+  email: "camille@collecteur-dupont.com",
+  phone: "06 98 24 54 71",
+};
 
 const SCENARIOS: Scenario[] = [
   {
@@ -92,276 +126,46 @@ const SCENARIOS: Scenario[] = [
       {
         name: "Création du BSD",
         bsd: {
-          customId: "EX-2020-001",
+          customId: "EX-00000001",
           emitter: {
-            company: {
-              name: "Garage Bollier",
-              siret: "4920184028394",
-              address: "32 rue André Bollier, 69007 Lyon",
-              contact: "BOYER Jeanne",
-              email: "jeanne@garage-bollier.com",
-              phone: "06 82 92 18 50",
-            },
-            signature: null,
             type: EmitterType.Producer,
+            company: EMITTER_COMPANY,
+            signature: null,
+            nextTreatmentOperation: {
+              code: "R1",
+              description: "",
+            },
           },
           temporaryStorage: null,
-          waste: {
-            code: "01 01 01",
-            description: "",
-            consistency: WasteConsistency.Solid,
-          },
-          adr: "",
-          packages: {
-            description: "",
-            quantity: 1,
-            type: PackagesType.Benne,
-          },
-          quantity: {
-            type: QuantityType.Estimated,
-            tons: 0.43,
-          },
           recipient: {
-            company: {
-              name: "José Collecte d'Huiles",
-              siret: "9481927402817",
-              address: "12 rue Michel Berthelot, 69000 Lyon",
-              contact: "PAYET Jérémy",
-              email: "jeremy@jose-collecte-dhuiles.com",
-              phone: "09 78 23 12 85",
-            },
-            reception: null,
-            treatment: {
-              operation: {
-                code: "R1",
-                description: "Traitement R1",
+            company: RECIPIENT_COMPANY,
+            transporter: {
+              company: TRANSPORTER_COMPANY,
+              receipt: TRANSPORTER_RECEIPT,
+              packages: [
+                {
+                  type: TransporterPackageType.Benne,
+                  quantity: 1,
+                },
+              ],
+              weight: {
+                type: WasteWeightType.Estimate,
+                tons: 0.5,
               },
               signature: null,
             },
+            reception: null,
+            treatment: null,
           },
-          transporter: {
-            company: {
-              name: "Inter Transports",
-              siret: "0419428495012",
-              address: "9 impasse des Acacias, 69001 Lyon",
-              contact: "GRONDIN Camille",
-              email: "camille@inter-transports.com",
-              phone: "02 58 30 12 58",
-            },
-            receipt: {
-              expiresAt: "01/01/2026",
-              department: "69",
-              number: "0129319400851AX",
-              transportMode: "routier",
-            },
-            signature: null,
+          waste: {
+            adr: "",
+            code: "01 01 01",
+            description: "Débris de métaux",
+            consistency: WasteConsistency.Solid,
           },
         },
       },
-      [
-        produce((step: ScenarioStep) => {
-          step.name = "Signature de l'enlèvement";
-          step.bsd.emitter.signature = {
-            date: new Date().toLocaleDateString(),
-            author: step.bsd.emitter.company.contact,
-          };
-          step.bsd.transporter.signature = {
-            date: new Date().toLocaleDateString(),
-            author: step.bsd.transporter.company.contact,
-          };
-        }),
-        produce((step: ScenarioStep) => {
-          step.name = "Arrivée à l'installation de destination";
-          step.bsd.recipient.reception = {
-            date: new Date().toLocaleDateString(),
-            quantity: step.bsd.quantity,
-            refusal: null,
-            signature: null,
-          };
-        }),
-        produce((step: ScenarioStep) => {
-          step.name = "Accepté par l'installation de destination";
-          step.bsd.recipient.reception!.quantity = {
-            type: QuantityType.Real,
-            tons: 0.5,
-          };
-          step.bsd.recipient.reception!.signature = {
-            date: new Date().toLocaleDateString(),
-            author: step.bsd.recipient.company.contact,
-          };
-        }),
-        produce((step: ScenarioStep) => {
-          step.name = "Traité par l'installation de destination";
-          step.bsd.recipient.treatment.signature = {
-            date: new Date().toLocaleDateString(),
-            author: step.bsd.recipient.company.contact,
-          };
-        }),
-      ]
-    ),
-  },
-  {
-    name: "Entreposage provisoire",
-    description:
-      "Le déchet part du producteur, passe par un entreposage provisoire puis va à l'exutoire.",
-    steps: produceScenarioSteps(
-      {
-        name: "Création du BSD",
-        bsd: {
-          customId: "EX-2020-001",
-          emitter: {
-            company: {
-              name: "Garage Bollier",
-              siret: "4920184028394",
-              address: "32 rue André Bollier, 69007 Lyon",
-              contact: "BOYER Jeanne",
-              email: "jeanne@garage-bollier.com",
-              phone: "06 82 92 18 50",
-            },
-            signature: null,
-            type: EmitterType.Producer,
-          },
-          temporaryStorage: {
-            company: {
-              name: "José Entrepôts",
-              siret: "01928374618236",
-              address: "67 rue Lemarchand, 69001 Lyon",
-              contact: "LALLEMAND Antoine",
-              email: "antoine@jose-entrepots.com",
-              phone: "54 23 95 01 23",
-            },
-            cap: "",
-            reception: null,
-            treatment: {
-              operation: {
-                code: "R12",
-                description: "",
-              },
-              signature: null,
-            },
-          },
-          waste: {
-            code: "01 01 01",
-            description: "",
-            consistency: WasteConsistency.Solid,
-          },
-          adr: "",
-          packages: {
-            description: "",
-            quantity: 1,
-            type: PackagesType.Benne,
-          },
-          quantity: {
-            type: QuantityType.Estimated,
-            tons: 0.43,
-          },
-          recipient: {
-            company: {
-              name: "José Collecte d'Huiles",
-              siret: "9481927402817",
-              address: "12 rue Michel Berthelot, 69000 Lyon",
-              contact: "PAYET Jérémy",
-              email: "jeremy@jose-collecte-dhuiles.com",
-              phone: "09 78 23 12 85",
-            },
-            reception: null,
-            treatment: {
-              operation: {
-                code: "R1",
-                description: "Traitement R1",
-              },
-              signature: null,
-            },
-          },
-          transporter: {
-            company: {
-              name: "Inter Transports",
-              siret: "0419428495012",
-              address: "9 impasse des Acacias, 69001 Lyon",
-              contact: "GRONDIN Camille",
-              email: "camille@inter-transports.com",
-              phone: "02 58 30 12 58",
-            },
-            receipt: {
-              expiresAt: "01/01/2026",
-              department: "69",
-              number: "0129319400851AX",
-              transportMode: "routier",
-            },
-            signature: null,
-          },
-        },
-      },
-      [
-        produce((step: ScenarioStep) => {
-          step.name = "Signature de l'enlèvement";
-          step.bsd.emitter.signature = {
-            date: new Date().toLocaleDateString(),
-            author: step.bsd.emitter.company.contact,
-          };
-          step.bsd.transporter.signature = {
-            date: new Date().toLocaleDateString(),
-            author: step.bsd.transporter.company.contact,
-          };
-        }),
-        produce((step: ScenarioStep) => {
-          step.name = "Arrivée à l'entreposage provisoire";
-          step.bsd.temporaryStorage!.reception = {
-            date: new Date().toLocaleDateString(),
-            quantity: step.bsd.quantity,
-            refusal: null,
-            signature: null,
-          };
-        }),
-        produce((step: ScenarioStep) => {
-          step.name = "Accepté par l'entreposage provisoire";
-          step.bsd.temporaryStorage!.reception!.quantity = {
-            type: QuantityType.Real,
-            tons: 0.5,
-          };
-          step.bsd.temporaryStorage!.reception!.signature = {
-            date: new Date().toLocaleDateString(),
-            author: step.bsd.temporaryStorage!.company.contact,
-          };
-        }),
-        produce((step: ScenarioStep) => {
-          step.name = "Traité par l'entreposage provisoire";
-          step.bsd.temporaryStorage!.treatment.signature = {
-            date: new Date().toLocaleDateString(),
-            author: step.bsd.temporaryStorage!.company.contact,
-          };
-        }),
-        produce((step: ScenarioStep) => {
-          step.name = "Dépârt de l'entreposage provisoire (incomplet)";
-        }),
-        produce((step: ScenarioStep) => {
-          step.name = "Arrivée à l'installation de destination";
-          step.bsd.recipient.reception = {
-            date: new Date().toLocaleDateString(),
-            quantity: step.bsd.quantity,
-            refusal: null,
-            signature: null,
-          };
-        }),
-        produce((step: ScenarioStep) => {
-          step.name = "Accepté par l'installation de destination";
-          step.bsd.recipient.reception!.quantity = {
-            type: QuantityType.Real,
-            tons: 0.5,
-          };
-          step.bsd.recipient.reception!.signature = {
-            date: new Date().toLocaleDateString(),
-            author: step.bsd.recipient.company.contact,
-          };
-        }),
-        produce((step: ScenarioStep) => {
-          step.name = "Traité par l'installation de destination";
-          step.bsd.recipient.treatment.signature = {
-            date: new Date().toLocaleDateString(),
-            author: step.bsd.recipient.company.contact,
-          };
-        }),
-      ]
+      []
     ),
   },
 ];
@@ -384,6 +188,11 @@ function App() {
     }
 
     const step = scenario.steps[currentScenario.step];
+
+    if (step == null) {
+      throw new Error(`No step found with index ${currentScenario.step}`);
+    }
+
     const previousStep = scenario.steps[Math.max(0, currentScenario.step - 1)];
 
     return {

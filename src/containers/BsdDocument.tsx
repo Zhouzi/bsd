@@ -9,115 +9,36 @@ import {
   BsdListItem,
   BsdInputField,
 } from "../components";
-
-export interface Bsd {
-  customId: string;
-  emitter: Emitter;
-  temporaryStorage: TemporaryStorage | null;
-  waste: Waste;
-  adr: string;
-  packages: Packages;
-  quantity: Quantity;
-  transporter: Transporter;
-  recipient: Recipient;
-}
-interface Recipient {
-  company: Company;
-  reception: Reception | null;
-  treatment: Treatment;
-}
-interface Transporter {
-  company: Company;
-  receipt: TransporterReceipt;
-  signature: Signature | null;
-}
-interface Signature {
-  author: string;
-  date: string;
-}
-interface TransporterReceipt {
-  number: string;
-  expiresAt: string;
-  transportMode: string;
-  department: string;
-}
-interface Quantity {
-  type: QuantityType;
-  tons: number;
-}
-export enum QuantityType {
-  Estimated = "ESTIMATED",
-  Real = "REAL",
-}
-interface Packages {
-  type: PackagesType;
-  quantity: number;
-  description: string;
-}
-export enum PackagesType {
-  Benne = "BENNE",
-  GRV = "GRV",
-  Fut = "FUT",
-  Other = "OTHER",
-}
-interface Waste {
-  code: string;
-  description: string;
-  consistency: WasteConsistency;
-}
-export enum WasteConsistency {
-  Solid = "SOLID",
-  Liquid = "LIQUID",
-  Gaseous = "GASEOUS",
-}
-interface Emitter {
-  type: EmitterType;
-  company: Company;
-  signature: Signature | null;
-}
-export enum EmitterType {
-  Producer = "PRODUCER",
-  Appendix1 = "APPENDIX1",
-  Appendix2 = "APPENDIX2",
-  Other = "OTHER",
-}
-interface TemporaryStorage {
-  company: Company;
-  reception: Reception | null;
-  treatment: Treatment;
-  cap: string;
-}
-interface Reception {
-  date: string;
-  quantity: Quantity | null;
-  refusal: string | null;
-  signature: Signature | null;
-}
-interface Treatment {
-  operation: TreatmentOperation;
-  signature: Signature | null;
-}
-interface TreatmentOperation {
-  code: string;
-  description: string;
-}
-interface Company {
-  siret: string;
-  name: string;
-  address: string;
-  phone: string;
-  email: string;
-  contact: string;
-}
+import {
+  Bsd,
+  EmitterType,
+  TemporaryStorage,
+  WasteConsistency,
+  Signature,
+  Reception,
+  WasteWeightType,
+  Treatment,
+} from "../types";
+import { BsdCompany } from "./BsdCompany";
+import { BsdNextTreatmentOperation } from "./BsdNextTreatmentOperation";
+import { BsdPackages } from "./BsdPackages";
+import { BsdQuantity } from "./BsdQuantity";
+import { BsdTransporterReceipt } from "./BsdTransporterReceipt";
+import { BsdSignature } from "./BsdSignature";
 
 export function BsdDocument() {
   const { values, setFieldValue } = useFormikContext<Bsd>();
+
   return (
     <BsdContainer>
       <BsdBox>
         <BsdBoxColumn>
-          <BsdLabel>Bordereau n° :</BsdLabel>{" "}
-          <Field component={BsdInputField} name="customId" />
+          <BsdLabel>Bordereau n°</BsdLabel>
+          <BsdList>
+            <BsdListItem>
+              <Field component={BsdInputField} type="text" name="customId" />
+            </BsdListItem>
+          </BsdList>
         </BsdBoxColumn>
       </BsdBox>
       <BsdBox>
@@ -167,71 +88,8 @@ export function BsdDocument() {
               </label>
             </BsdListItem>
           </BsdList>
-
-          <BsdList>
-            <BsdListItem>
-              <label>
-                N° SIRET :{" "}
-                <Field
-                  component={BsdInputField}
-                  type="text"
-                  name="emitter.company.siret"
-                />
-              </label>
-            </BsdListItem>
-            <BsdListItem>
-              <label>
-                NOM :{" "}
-                <Field
-                  component={BsdInputField}
-                  type="text"
-                  name="emitter.company.name"
-                />
-              </label>
-            </BsdListItem>
-            <BsdListItem>
-              <label>
-                Adresse :{" "}
-                <Field
-                  component={BsdInputField}
-                  type="text"
-                  name="emitter.company.address"
-                />
-              </label>
-            </BsdListItem>
-            <BsdListItem>
-              <label>
-                Tél :{" "}
-                <Field
-                  component={BsdInputField}
-                  type="phone"
-                  name="emitter.company.phone"
-                />
-              </label>
-            </BsdListItem>
-            <BsdListItem>
-              <label>
-                Mél :{" "}
-                <Field
-                  component={BsdInputField}
-                  type="email"
-                  name="emitter.company.email"
-                />
-              </label>
-            </BsdListItem>
-            <BsdListItem>
-              <label>
-                Personne à contacter :{" "}
-                <Field
-                  component={BsdInputField}
-                  type="text"
-                  name="emitter.company.contact"
-                />
-              </label>
-            </BsdListItem>
-          </BsdList>
+          <BsdCompany name="emitter.company" />
         </BsdBoxColumn>
-
         <BsdBoxColumn>
           <BsdLabel>
             2. Installation de destination ou d’entreposage ou de
@@ -245,137 +103,44 @@ export function BsdDocument() {
               <label>
                 <input
                   type="radio"
-                  name="temporaryStorage"
-                  onChange={() => {
-                    setFieldValue("temporaryStorage", {
-                      company: {
-                        siret: "",
-                        name: "",
-                        address: "",
-                        phone: "",
-                        email: "",
-                        contact: "",
-                      },
-                      cap: "",
-                      treatment: {
-                        operation: {
-                          code: "R12",
-                          description: "",
-                        },
-                        signature: null,
-                      },
-                      reception: null,
-                    });
-                  }}
+                  name="hasTemporaryStorage"
                   checked={Boolean(values.temporaryStorage)}
+                  onChange={() => {
+                    const temporaryStorage: TemporaryStorage = {
+                      company: values.recipient.transporter.company,
+                      reception: null,
+                      signature: null,
+                      nextTreatmentOperation:
+                        values.emitter.nextTreatmentOperation,
+                      transporter: values.recipient.transporter,
+                      treatment: null,
+                    };
+                    setFieldValue("temporaryStorage", temporaryStorage);
+                  }}
                 />{" "}
-                Oui
+                Oui (cadres 13 à 19 à remplir)
               </label>
             </BsdListItem>
             <BsdListItem>
               <label>
                 <input
                   type="radio"
-                  name="temporaryStorage"
+                  name="hasTemporaryStorage"
+                  checked={values.temporaryStorage == null}
                   onChange={() => {
                     setFieldValue("temporaryStorage", null);
                   }}
-                  checked={values.temporaryStorage == null}
                 />{" "}
                 Non
               </label>
             </BsdListItem>
           </BsdList>
-
-          {values.temporaryStorage && (
-            <>
-              <BsdList>
-                <BsdListItem>
-                  <label>
-                    N° SIRET :{" "}
-                    <Field
-                      component={BsdInputField}
-                      type="text"
-                      name="temporaryStorage.company.siret"
-                    />
-                  </label>
-                </BsdListItem>
-                <BsdListItem>
-                  <label>
-                    NOM :{" "}
-                    <Field
-                      component={BsdInputField}
-                      type="text"
-                      name="temporaryStorage.company.name"
-                    />
-                  </label>
-                </BsdListItem>
-                <BsdListItem>
-                  <label>
-                    Adresse :{" "}
-                    <Field
-                      component={BsdInputField}
-                      type="text"
-                      name="temporaryStorage.company.address"
-                    />
-                  </label>
-                </BsdListItem>
-                <BsdListItem>
-                  <label>
-                    Tél :{" "}
-                    <Field
-                      component={BsdInputField}
-                      type="phone"
-                      name="temporaryStorage.company.phone"
-                    />
-                  </label>
-                </BsdListItem>
-                <BsdListItem>
-                  <label>
-                    Mél :{" "}
-                    <Field
-                      component={BsdInputField}
-                      type="email"
-                      name="temporaryStorage.company.email"
-                    />
-                  </label>
-                </BsdListItem>
-                <BsdListItem>
-                  <label>
-                    Personne à contacter :{" "}
-                    <Field
-                      component={BsdInputField}
-                      type="text"
-                      name="temporaryStorage.company.contact"
-                    />
-                  </label>
-                </BsdListItem>
-              </BsdList>
-
-              <BsdList>
-                <BsdListItem>
-                  <label>
-                    N° de CAP :{" "}
-                    <Field
-                      component={BsdInputField}
-                      type="text"
-                      name="temporaryStorage.cap"
-                    />
-                  </label>
-                </BsdListItem>
-                <BsdListItem>
-                  <label>
-                    Opération d’élimination / valorisation prévue (code D/R) :{" "}
-                    <Field
-                      component={BsdInputField}
-                      type="text"
-                      name="temporaryStorage.treatment.operation.code"
-                    />
-                  </label>
-                </BsdListItem>
-              </BsdList>
-            </>
+          {values.temporaryStorage ? (
+            <BsdCompany name="temporaryStorage.company" />
+          ) : (
+            <BsdCompany name="recipient.company" />
           )}
+          <BsdNextTreatmentOperation name="emitter.nextTreatmentOperation" />
         </BsdBoxColumn>
       </BsdBox>
       <BsdBox>
@@ -441,11 +206,12 @@ export function BsdDocument() {
       <BsdBox>
         <BsdBoxColumn>
           <BsdLabel>
-            4. Mentions au titre des règlements ADR, RID, ADNR, IMDG
+            4. Mentions au titre des règlements ADR, RID, ADNR, IMDG (le cas
+            échéant)
           </BsdLabel>
           <BsdList>
             <BsdListItem>
-              <Field component={BsdInputField} type="text" name="adr" />
+              <Field component={BsdInputField} type="text" name="waste.adr" />
             </BsdListItem>
           </BsdList>
         </BsdBoxColumn>
@@ -453,257 +219,95 @@ export function BsdDocument() {
       <BsdBox>
         <BsdBoxColumn>
           <BsdLabel>5. Conditionnement</BsdLabel>
-          <BsdList orientation="horizontal">
-            <BsdListItem>
-              <label>
-                <Field
-                  type="radio"
-                  name="packages.type"
-                  value={PackagesType.Benne}
-                />{" "}
-                Benne
-              </label>
-            </BsdListItem>
-            <BsdListItem>
-              <label>
-                <Field
-                  type="radio"
-                  name="packages.type"
-                  value={PackagesType.GRV}
-                />{" "}
-                GRV
-              </label>
-            </BsdListItem>
-            <BsdListItem>
-              <label>
-                <Field
-                  type="radio"
-                  name="packages.type"
-                  value={PackagesType.Fut}
-                />{" "}
-                Fût
-              </label>
-            </BsdListItem>
-            <BsdListItem>
-              <label>
-                <Field
-                  type="radio"
-                  name="packages.type"
-                  value={PackagesType.Other}
-                />{" "}
-                Autre (préciser)
-              </label>
-            </BsdListItem>
-            <BsdListItem>
-              <label>
-                Nombre :{" "}
-                <Field
-                  component={BsdInputField}
-                  type="number"
-                  name="packages.quantity"
-                />
-              </label>
-            </BsdListItem>
-          </BsdList>
+          {values.temporaryStorage ? (
+            <BsdPackages name="temporaryStorage.transporter.packages" />
+          ) : (
+            <BsdPackages name="recipient.transporter.packages" />
+          )}
         </BsdBoxColumn>
       </BsdBox>
       <BsdBox>
         <BsdBoxColumn>
           <BsdLabel>6. Quantité</BsdLabel>
-          <BsdList orientation="horizontal">
-            <BsdListItem>
-              <label>
-                <Field
-                  type="radio"
-                  name="quantity.type"
-                  value={QuantityType.Estimated}
-                />{" "}
-                Estimée
-              </label>
-            </BsdListItem>
-            <BsdListItem>
-              <label>
-                <Field
-                  type="radio"
-                  name="quantity.type"
-                  value={QuantityType.Real}
-                />{" "}
-                Réel
-              </label>
-            </BsdListItem>
-            <BsdListItem>
-              <Field
-                component={BsdInputField}
-                type="number"
-                name="quantity.tons"
-                min="0"
-                step="0.001"
-              />{" "}
-              tonnes
-            </BsdListItem>
-          </BsdList>
-        </BsdBoxColumn>
-      </BsdBox>
-      <BsdBox>
-        <BsdBoxColumn>
-          <BsdLabel>7. Négociant</BsdLabel>
+          {values.temporaryStorage ? (
+            <BsdQuantity name="temporaryStorage.transporter.weight" />
+          ) : (
+            <BsdQuantity name="recipient.transporter.weight" />
+          )}
         </BsdBoxColumn>
       </BsdBox>
       <BsdBox>
         <BsdBoxColumn>
           <BsdLabel>8. Collecteur-transporteur</BsdLabel>
-          <BsdList>
-            <BsdListItem>
-              <label>
-                N° SIRET :{" "}
-                <Field
-                  component={BsdInputField}
-                  type="text"
-                  name="transporter.company.siret"
+          <BsdCompany name="recipient.transporter.company" />
+          <BsdTransporterReceipt name="recipient.transporter.receipt" />
+          {values.temporaryStorage ? (
+            <>
+              {values.temporaryStorage.transporter.signature ? (
+                <BsdSignature
+                  name="temporaryStorage.transporter.signature"
+                  onCancel={() => {
+                    setFieldValue(
+                      "temporaryStorage.transporter.signature",
+                      null
+                    );
+                  }}
                 />
-              </label>
-            </BsdListItem>
-            <BsdListItem>
-              <label>
-                NOM :{" "}
-                <Field
-                  component={BsdInputField}
-                  type="text"
-                  name="transporter.company.name"
+              ) : (
+                <BsdList>
+                  <BsdListItem>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const signature: Signature = {
+                          author: values.temporaryStorage!.transporter.company
+                            .contact,
+                          date: new Date().toLocaleDateString(),
+                        };
+                        setFieldValue(
+                          "temporaryStorage.transporter.signature",
+                          signature
+                        );
+                      }}
+                    >
+                      Signer l'enlèvement
+                    </button>
+                  </BsdListItem>
+                </BsdList>
+              )}
+            </>
+          ) : (
+            <>
+              {values.recipient.transporter.signature ? (
+                <BsdSignature
+                  name="recipient.transporter.signature"
+                  onCancel={() => {
+                    setFieldValue("recipient.transporter.signature", null);
+                  }}
                 />
-              </label>
-            </BsdListItem>
-            <BsdListItem>
-              <label>
-                Adresse :{" "}
-                <Field
-                  component={BsdInputField}
-                  type="text"
-                  name="transporter.company.address"
-                />
-              </label>
-            </BsdListItem>
-            <BsdListItem>
-              <label>
-                Tél :{" "}
-                <Field
-                  component={BsdInputField}
-                  type="phone"
-                  name="transporter.company.phone"
-                />
-              </label>
-            </BsdListItem>
-            <BsdListItem>
-              <label>
-                Mél :{" "}
-                <Field
-                  component={BsdInputField}
-                  type="email"
-                  name="transporter.company.email"
-                />
-              </label>
-            </BsdListItem>
-            <BsdListItem>
-              <label>
-                Personne à contacter :{" "}
-                <Field
-                  component={BsdInputField}
-                  type="text"
-                  name="transporter.company.contact"
-                />
-              </label>
-            </BsdListItem>
-          </BsdList>
-          <BsdList>
-            <BsdListItem>
-              <label>
-                Récépissé n° :{" "}
-                <Field
-                  component={BsdInputField}
-                  type="text"
-                  name="transporter.receipt.number"
-                />
-              </label>
-            </BsdListItem>
-            <BsdListItem>
-              <label>
-                Département :{" "}
-                <Field
-                  component={BsdInputField}
-                  type="text"
-                  name="transporter.receipt.department"
-                />
-              </label>
-            </BsdListItem>
-            <BsdListItem>
-              <label>
-                Limite de validité :{" "}
-                <Field
-                  component={BsdInputField}
-                  type="text"
-                  name="transporter.receipt.expiresAt"
-                />
-              </label>
-            </BsdListItem>
-            <BsdListItem>
-              <label>
-                Mode de transport :{" "}
-                <Field
-                  component={BsdInputField}
-                  type="text"
-                  name="transporter.receipt.transportMode"
-                />
-              </label>
-            </BsdListItem>
-          </BsdList>
-          <BsdList>
-            {values.transporter.signature ? (
-              <>
-                <BsdListItem>
-                  <label>
-                    Date de prise en charge :{" "}
-                    <Field
-                      component={BsdInputField}
-                      type="string"
-                      name="transporter.signature.date"
-                    />
-                  </label>
-                </BsdListItem>
-                <BsdListItem>
-                  <label>
-                    Signature :{" "}
-                    <Field
-                      component={BsdInputField}
-                      type="string"
-                      name="transporter.signature.author"
-                    />
-                  </label>
-                </BsdListItem>
-                <BsdListItem>
-                  <button
-                    type="button"
-                    onClick={() => setFieldValue("transporter.signature", null)}
-                  >
-                    Annuler l'enlèvement
-                  </button>
-                </BsdListItem>
-              </>
-            ) : (
-              <BsdListItem>
-                <button
-                  type="button"
-                  onClick={() =>
-                    setFieldValue("transporter.signature", {
-                      date: new Date().toLocaleDateString(),
-                      author: values.transporter.company.contact,
-                    })
-                  }
-                >
-                  Signer l'enlèvement
-                </button>
-              </BsdListItem>
-            )}
-          </BsdList>
+              ) : (
+                <BsdList>
+                  <BsdListItem>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const signature: Signature = {
+                          author: values.recipient.transporter.company.contact,
+                          date: new Date().toLocaleDateString(),
+                        };
+                        setFieldValue(
+                          "recipient.transporter.signature",
+                          signature
+                        );
+                      }}
+                    >
+                      Signer l'enlèvement
+                    </button>
+                  </BsdListItem>
+                </BsdList>
+              )}
+            </>
+          )}
         </BsdBoxColumn>
       </BsdBox>
       <BsdBox>
@@ -714,57 +318,34 @@ export function BsdDocument() {
           <BsdList>
             <BsdListItem>
               Je soussigné certifie que les renseignements portés dans les
-              cadres ci-dessus sont exacts et établis de bonne foi.
+              cadres ci-dessus sont exacts et établis de bonne foi
             </BsdListItem>
           </BsdList>
-          <BsdList>
-            {values.emitter.signature ? (
-              <>
-                <BsdListItem>
-                  <label>
-                    Date de prise en charge :{" "}
-                    <Field
-                      component={BsdInputField}
-                      type="string"
-                      name="emitter.signature.date"
-                    />
-                  </label>
-                </BsdListItem>
-                <BsdListItem>
-                  <label>
-                    Signature :{" "}
-                    <Field
-                      component={BsdInputField}
-                      type="string"
-                      name="emitter.signature.author"
-                    />
-                  </label>
-                </BsdListItem>
-                <BsdListItem>
-                  <button
-                    type="button"
-                    onClick={() => setFieldValue("emitter.signature", null)}
-                  >
-                    Annuler l'enlèvement
-                  </button>
-                </BsdListItem>
-              </>
-            ) : (
+          {values.emitter.signature ? (
+            <BsdSignature
+              name="emitter.signature"
+              onCancel={() => {
+                setFieldValue("emitter.signature", null);
+              }}
+            />
+          ) : (
+            <BsdList>
               <BsdListItem>
                 <button
                   type="button"
-                  onClick={() =>
-                    setFieldValue("emitter.signature", {
-                      date: new Date().toLocaleDateString(),
+                  onClick={() => {
+                    const signature: Signature = {
                       author: values.emitter.company.contact,
-                    })
-                  }
+                      date: new Date().toLocaleDateString(),
+                    };
+                    setFieldValue("emitter.signature", signature);
+                  }}
                 >
                   Signer l'enlèvement
                 </button>
               </BsdListItem>
-            )}
-          </BsdList>
+            </BsdList>
+          )}
         </BsdBoxColumn>
       </BsdBox>
       <BsdBox>
@@ -772,68 +353,7 @@ export function BsdDocument() {
           <BsdLabel>
             10. Expédition reçue à l’installation de destination
           </BsdLabel>
-          <BsdList>
-            <BsdListItem>
-              <label>
-                N° SIRET :{" "}
-                <Field
-                  component={BsdInputField}
-                  type="text"
-                  name="recipient.company.siret"
-                />
-              </label>
-            </BsdListItem>
-            <BsdListItem>
-              <label>
-                NOM :{" "}
-                <Field
-                  component={BsdInputField}
-                  type="text"
-                  name="recipient.company.name"
-                />
-              </label>
-            </BsdListItem>
-            <BsdListItem>
-              <label>
-                Adresse :{" "}
-                <Field
-                  component={BsdInputField}
-                  type="text"
-                  name="recipient.company.address"
-                />
-              </label>
-            </BsdListItem>
-            <BsdListItem>
-              <label>
-                Tél :{" "}
-                <Field
-                  component={BsdInputField}
-                  type="phone"
-                  name="recipient.company.phone"
-                />
-              </label>
-            </BsdListItem>
-            <BsdListItem>
-              <label>
-                Mél :{" "}
-                <Field
-                  component={BsdInputField}
-                  type="email"
-                  name="recipient.company.email"
-                />
-              </label>
-            </BsdListItem>
-            <BsdListItem>
-              <label>
-                Personne à contacter :{" "}
-                <Field
-                  component={BsdInputField}
-                  type="text"
-                  name="recipient.company.contact"
-                />
-              </label>
-            </BsdListItem>
-          </BsdList>
+          <BsdCompany name="recipient.company" />
           {values.recipient.reception ? (
             <>
               <BsdList>
@@ -842,10 +362,8 @@ export function BsdDocument() {
                     Quantité réelle présentée :{" "}
                     <Field
                       component={BsdInputField}
-                      type="number"
-                      name="recipient.reception.quantity.tons"
-                    />{" "}
-                    tonnes
+                      name="recipient.reception.weight.tons"
+                    />
                   </label>
                 </BsdListItem>
                 <BsdListItem>
@@ -853,7 +371,6 @@ export function BsdDocument() {
                     Date de présentation :{" "}
                     <Field
                       component={BsdInputField}
-                      type="text"
                       name="recipient.reception.date"
                     />
                   </label>
@@ -865,11 +382,11 @@ export function BsdDocument() {
                   <label>
                     <input
                       type="radio"
-                      name="refusal"
-                      onChange={() =>
-                        setFieldValue("recipient.reception.refusal", null)
-                      }
-                      checked={values.recipient.reception?.refusal == null}
+                      name="recipientRefusal"
+                      checked={values.recipient.reception.refusal == null}
+                      onChange={() => {
+                        setFieldValue("recipient.reception.refusal", null);
+                      }}
                     />{" "}
                     Oui
                   </label>
@@ -878,94 +395,72 @@ export function BsdDocument() {
                   <label>
                     <input
                       type="radio"
-                      name="refusal"
-                      onChange={() =>
+                      name="recipientRefusal"
+                      checked={values.recipient.reception.refusal != null}
+                      onChange={() => {
                         setFieldValue(
                           "recipient.reception.refusal",
-                          "Préciser la raison du refus"
-                        )
-                      }
-                      checked={values.recipient.reception?.refusal != null}
+                          "Préciser la raison"
+                        );
+                      }}
                     />{" "}
                     Non
                   </label>
                 </BsdListItem>
               </BsdList>
-              {values.recipient.reception?.refusal != null && (
+              {values.recipient.reception.refusal != null && (
                 <BsdList>
                   <BsdListItem>
                     <label>
-                      Motif du refus :{" "}
+                      Motif de refus :{" "}
                       <Field
                         component={BsdInputField}
                         type="text"
-                        name="recipient.refusal"
+                        name="recipient.reception.refusal"
                       />
                     </label>
                   </BsdListItem>
                 </BsdList>
               )}
+              {values.recipient.reception.signature ? (
+                <BsdSignature
+                  name="recipient.reception.signature"
+                  onCancel={() => {
+                    setFieldValue("recipient.reception.signature", null);
+                  }}
+                />
+              ) : (
+                <BsdList>
+                  <BsdListItem>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const signature: Signature = {
+                          author: values.recipient.company.contact,
+                          date: new Date().toLocaleDateString(),
+                        };
+                        setFieldValue(
+                          "recipient.reception.signature",
+                          signature
+                        );
+                      }}
+                    >
+                      Signer la prise en charge
+                    </button>
+                  </BsdListItem>
+                </BsdList>
+              )}
               <BsdList>
-                {values.recipient.reception?.signature ? (
-                  <>
-                    <BsdListItem>
-                      <label>
-                        Date de prise en charge :{" "}
-                        <Field
-                          component={BsdInputField}
-                          type="string"
-                          name="recipient.reception.signature.date"
-                        />
-                      </label>
-                    </BsdListItem>
-                    <BsdListItem>
-                      <label>
-                        Signature :{" "}
-                        <Field
-                          component={BsdInputField}
-                          type="string"
-                          name="recipient.reception.signature.author"
-                        />
-                      </label>
-                    </BsdListItem>
-                    <BsdListItem>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setFieldValue("recipient.reception.signature", null)
-                        }
-                      >
-                        Annuler la prise en charge
-                      </button>
-                    </BsdListItem>
-                  </>
-                ) : (
-                  <>
-                    <BsdListItem>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setFieldValue("recipient.reception", null)
-                        }
-                      >
-                        Annuler la réception
-                      </button>
-                    </BsdListItem>
-                    <BsdListItem>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setFieldValue("recipient.reception.signature", {
-                            date: new Date().toLocaleDateString(),
-                            author: values.recipient.company.contact,
-                          })
-                        }
-                      >
-                        Signer la prise en charge
-                      </button>
-                    </BsdListItem>
-                  </>
-                )}
+                <BsdListItem>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFieldValue("recipient.reception", null);
+                    }}
+                  >
+                    Annuler la réception
+                  </button>
+                </BsdListItem>
               </BsdList>
             </>
           ) : (
@@ -973,14 +468,20 @@ export function BsdDocument() {
               <BsdListItem>
                 <button
                   type="button"
-                  onClick={() =>
-                    setFieldValue("recipient.reception", {
+                  onClick={() => {
+                    const reception: Reception = {
                       date: new Date().toLocaleDateString(),
-                      quantity: values.quantity,
                       refusal: null,
                       signature: null,
-                    })
-                  }
+                      weight: {
+                        type: WasteWeightType.Real,
+                        tons:
+                          values.temporaryStorage?.transporter.weight.tons ??
+                          values.recipient.transporter.weight.tons,
+                      },
+                    };
+                    setFieldValue("recipient.reception", reception);
+                  }}
                 >
                   Réceptionner le déchet
                 </button>
@@ -990,87 +491,66 @@ export function BsdDocument() {
         </BsdBoxColumn>
         <BsdBoxColumn>
           <BsdLabel>11. Réalisation de l’opération</BsdLabel>
-          <BsdList>
-            <BsdListItem>
-              <label>
-                Code D/R :{" "}
-                <Field
-                  component={BsdInputField}
-                  type="text"
-                  name="recipient.treatment.operation.code"
-                />
-              </label>
-            </BsdListItem>
-            <BsdListItem>
-              <label>
-                Description :{" "}
-                <Field
-                  component={BsdInputField}
-                  type="text"
-                  name="recipient.treatment.operation.description"
-                />
-              </label>
-            </BsdListItem>
-          </BsdList>
-          <BsdList>
-            {values.recipient.treatment.signature ? (
-              <>
+          {values.recipient.treatment ? (
+            <>
+              <BsdList>
+                <BsdListItem>
+                  <label>
+                    Code D/R :{" "}
+                    <Field
+                      component={BsdInputField}
+                      type="text"
+                      name="recipient.treatment.operation.code"
+                    />
+                  </label>
+                </BsdListItem>
+                <BsdListItem>
+                  <label>
+                    Description :{" "}
+                    <Field
+                      component={BsdInputField}
+                      type="text"
+                      name="recipient.treatment.operation.description"
+                    />
+                  </label>
+                </BsdListItem>
+              </BsdList>
+              <BsdList>
                 <BsdListItem>
                   Je soussigné certifie que l’opération ci-dessus a été
                   effectuée
                 </BsdListItem>
-                <BsdListItem>
-                  <label>
-                    Date :{" "}
-                    <Field
-                      component={BsdInputField}
-                      type="string"
-                      name="recipient.treatment.signature.date"
-                    />
-                  </label>
-                </BsdListItem>
-                <BsdListItem>
-                  <label>
-                    Signature :{" "}
-                    <Field
-                      component={BsdInputField}
-                      type="string"
-                      name="recipient.treatment.signature.author"
-                    />
-                  </label>
-                </BsdListItem>
-                <BsdListItem>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setFieldValue("recipient.treatment.signature", null)
-                    }
-                  >
-                    Annuler la réalisation de l'opération
-                  </button>
-                </BsdListItem>
-              </>
-            ) : (
+              </BsdList>
+              <BsdSignature
+                name="recipient.treatment.signature"
+                onCancel={() => {
+                  setFieldValue("recipient.treatment", null);
+                }}
+              />
+            </>
+          ) : (
+            <BsdList>
               <BsdListItem>
                 <button
                   type="button"
-                  onClick={() =>
-                    setFieldValue("recipient.treatment.signature", {
-                      date: new Date().toLocaleDateString(),
-                      author: values.recipient.company.contact,
-                    })
-                  }
+                  onClick={() => {
+                    const treatment: Treatment = {
+                      operation:
+                        values.temporaryStorage?.nextTreatmentOperation ??
+                        values.emitter.nextTreatmentOperation,
+                      signature: {
+                        author: values.recipient.company.contact,
+                        date: new Date().toLocaleDateString(),
+                      },
+                    };
+                    setFieldValue("recipient.treatment", treatment);
+                  }}
                 >
                   Signer la réalisation de l'opération
                 </button>
               </BsdListItem>
-            )}
-          </BsdList>
-        </BsdBoxColumn>
-      </BsdBox>
-      <BsdBox>
-        <BsdBoxColumn>
-          <BsdLabel>12. Destination ultérieure prévue</BsdLabel>
+            </BsdList>
+          )}
         </BsdBoxColumn>
       </BsdBox>
       {values.temporaryStorage && (
@@ -1081,110 +561,40 @@ export function BsdDocument() {
                 13. Réception dans l’installation d’entreposage ou de
                 reconditionnement
               </BsdLabel>
-              <BsdList>
-                <BsdListItem>
-                  <label>
-                    N° SIRET :{" "}
-                    <Field
-                      component={BsdInputField}
-                      type="text"
-                      name="temporaryStorage.company.siret"
-                    />
-                  </label>
-                </BsdListItem>
-                <BsdListItem>
-                  <label>
-                    NOM :{" "}
-                    <Field
-                      component={BsdInputField}
-                      type="text"
-                      name="temporaryStorage.company.name"
-                    />
-                  </label>
-                </BsdListItem>
-                <BsdListItem>
-                  <label>
-                    Adresse :{" "}
-                    <Field
-                      component={BsdInputField}
-                      type="text"
-                      name="temporaryStorage.company.address"
-                    />
-                  </label>
-                </BsdListItem>
-                <BsdListItem>
-                  <label>
-                    Tél :{" "}
-                    <Field
-                      component={BsdInputField}
-                      type="phone"
-                      name="temporaryStorage.company.phone"
-                    />
-                  </label>
-                </BsdListItem>
-                <BsdListItem>
-                  <label>
-                    Mél :{" "}
-                    <Field
-                      component={BsdInputField}
-                      type="email"
-                      name="temporaryStorage.company.email"
-                    />
-                  </label>
-                </BsdListItem>
-                <BsdListItem>
-                  <label>
-                    Personne à contacter :{" "}
-                    <Field
-                      component={BsdInputField}
-                      type="text"
-                      name="temporaryStorage.company.contact"
-                    />
-                  </label>
-                </BsdListItem>
-              </BsdList>
-              {values.temporaryStorage?.reception ? (
+              <BsdCompany name="temporaryStorage.company" />
+              {values.temporaryStorage.reception ? (
                 <>
                   <BsdList>
-                    <BsdListItem>Quantité présentée :</BsdListItem>
                     <BsdListItem>
+                      Quantité présentée :{" "}
                       <label>
                         <Field
                           type="radio"
-                          name="temporaryStorage.reception.quantity.type"
-                          value={QuantityType.Estimated}
+                          name="temporaryStorage.reception.weight.type"
+                          value={WasteWeightType.Estimate}
                         />{" "}
                         Estimée
-                      </label>
-                    </BsdListItem>
-                    <BsdListItem>
+                      </label>{" "}
                       <label>
                         <Field
                           type="radio"
-                          name="temporaryStorage.reception.quantity.type"
-                          value={QuantityType.Real}
+                          name="temporaryStorage.reception.weight.type"
+                          value={WasteWeightType.Real}
                         />{" "}
-                        Réel
-                      </label>
-                    </BsdListItem>
-                    <BsdListItem>
+                        Réelle
+                      </label>{" "}
                       <Field
                         component={BsdInputField}
                         type="number"
-                        name="temporaryStorage.reception.quantity.tons"
-                        min="0"
-                        step="0.001"
+                        name="temporaryStorage.reception.weight.tons"
                       />{" "}
-                      tonnes
+                      tonne(s)
                     </BsdListItem>
-                  </BsdList>
-                  <BsdList>
                     <BsdListItem>
                       <label>
                         Date de présentation :{" "}
                         <Field
                           component={BsdInputField}
-                          type="text"
                           name="temporaryStorage.reception.date"
                         />
                       </label>
@@ -1196,16 +606,16 @@ export function BsdDocument() {
                       <label>
                         <input
                           type="radio"
-                          name="temporaryStorage.reception.refusal"
-                          onChange={() =>
+                          name="temporaryStorageRefusal"
+                          checked={
+                            values.temporaryStorage.reception.refusal == null
+                          }
+                          onChange={() => {
                             setFieldValue(
                               "temporaryStorage.reception.refusal",
                               null
-                            )
-                          }
-                          checked={
-                            values.temporaryStorage.reception?.refusal == null
-                          }
+                            );
+                          }}
                         />{" "}
                         Oui
                       </label>
@@ -1214,26 +624,26 @@ export function BsdDocument() {
                       <label>
                         <input
                           type="radio"
-                          name="temporaryStorage.reception.refusal"
-                          onChange={() =>
+                          name="temporaryStorageRefusal"
+                          checked={
+                            values.temporaryStorage.reception.refusal != null
+                          }
+                          onChange={() => {
                             setFieldValue(
                               "temporaryStorage.reception.refusal",
-                              "Préciser la raison du refus"
-                            )
-                          }
-                          checked={
-                            values.temporaryStorage.reception?.refusal != null
-                          }
+                              "Préciser la raison"
+                            );
+                          }}
                         />{" "}
                         Non
                       </label>
                     </BsdListItem>
                   </BsdList>
-                  {values.temporaryStorage.reception?.refusal != null && (
+                  {values.temporaryStorage.reception.refusal != null && (
                     <BsdList>
                       <BsdListItem>
                         <label>
-                          Motif du refus :{" "}
+                          Motif de refus :{" "}
                           <Field
                             component={BsdInputField}
                             type="text"
@@ -1243,62 +653,48 @@ export function BsdDocument() {
                       </BsdListItem>
                     </BsdList>
                   )}
-                  <BsdList>
-                    {values.temporaryStorage.reception?.signature ? (
-                      <>
-                        <BsdListItem>
-                          <label>
-                            Date de prise en charge :{" "}
-                            <Field
-                              component={BsdInputField}
-                              type="string"
-                              name="temporaryStorage.reception.signature.date"
-                            />
-                          </label>
-                        </BsdListItem>
-                        <BsdListItem>
-                          <label>
-                            Signature :{" "}
-                            <Field
-                              component={BsdInputField}
-                              type="string"
-                              name="temporaryStorage.reception.signature.author"
-                            />
-                          </label>
-                        </BsdListItem>
-                        <BsdListItem>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setFieldValue(
-                                "temporaryStorage.reception.signature",
-                                null
-                              )
-                            }
-                          >
-                            Annuler la prise en charge
-                          </button>
-                        </BsdListItem>
-                      </>
-                    ) : (
+                  {values.temporaryStorage.reception.signature ? (
+                    <BsdSignature
+                      name="temporaryStorage.reception.signature"
+                      onCancel={() => {
+                        setFieldValue(
+                          "temporaryStorage.reception.signature",
+                          null
+                        );
+                      }}
+                    />
+                  ) : (
+                    <BsdList>
                       <BsdListItem>
                         <button
                           type="button"
-                          onClick={() =>
+                          onClick={() => {
+                            const signature: Signature = {
+                              author: values.temporaryStorage!.company.contact,
+                              date: new Date().toLocaleDateString(),
+                            };
                             setFieldValue(
                               "temporaryStorage.reception.signature",
-                              {
-                                date: new Date().toLocaleDateString(),
-                                author: values.temporaryStorage!.company
-                                  .contact,
-                              }
-                            )
-                          }
+                              signature
+                            );
+                          }}
                         >
                           Signer la prise en charge
                         </button>
                       </BsdListItem>
-                    )}
+                    </BsdList>
+                  )}
+                  <BsdList>
+                    <BsdListItem>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFieldValue("temporaryStorage.reception", null);
+                        }}
+                      >
+                        Annuler la réception
+                      </button>
+                    </BsdListItem>
                   </BsdList>
                 </>
               ) : (
@@ -1306,14 +702,18 @@ export function BsdDocument() {
                   <BsdListItem>
                     <button
                       type="button"
-                      onClick={() =>
-                        setFieldValue("temporaryStorage.reception", {
+                      onClick={() => {
+                        const reception: Reception = {
                           date: new Date().toLocaleDateString(),
-                          quantity: values.quantity,
                           refusal: null,
                           signature: null,
-                        })
-                      }
+                          weight: {
+                            type: WasteWeightType.Estimate,
+                            tons: values.recipient.transporter.weight.tons,
+                          },
+                        };
+                        setFieldValue("temporaryStorage.reception", reception);
+                      }}
                     >
                       Réceptionner le déchet
                     </button>
@@ -1323,6 +723,97 @@ export function BsdDocument() {
             </BsdBoxColumn>
             <BsdBoxColumn>
               <BsdLabel>14. Installation de destination prévue</BsdLabel>
+              <BsdCompany name="recipient.company" />
+              <BsdNextTreatmentOperation name="temporaryStorage.nextTreatmentOperation" />
+            </BsdBoxColumn>
+          </BsdBox>
+          <BsdBox>
+            <BsdBoxColumn>
+              <BsdLabel>16. Conditionnement</BsdLabel>
+              <BsdPackages name="recipient.transporter.packages" />
+            </BsdBoxColumn>
+          </BsdBox>
+          <BsdBox>
+            <BsdBoxColumn>
+              <BsdLabel>17. Quantité</BsdLabel>
+              <BsdQuantity name="recipient.transporter.weight" />
+            </BsdBoxColumn>
+          </BsdBox>
+          <BsdBox>
+            <BsdBoxColumn>
+              <BsdLabel>
+                18. Collecteur-transporteur après entreposage ou
+                reconditionnement
+              </BsdLabel>
+              <BsdCompany name="recipient.transporter.company" />
+              <BsdTransporterReceipt name="recipient.transporter.receipt" />
+              {values.recipient.transporter.signature ? (
+                <BsdSignature
+                  name="recipient.transporter.signature"
+                  onCancel={() => {
+                    setFieldValue("recipient.transporter.signature", null);
+                  }}
+                />
+              ) : (
+                <BsdList>
+                  <BsdListItem>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const signature: Signature = {
+                          author: values.recipient.transporter.company.contact,
+                          date: new Date().toLocaleDateString(),
+                        };
+                        setFieldValue(
+                          "recipient.transporter.signature",
+                          signature
+                        );
+                      }}
+                    >
+                      Signer l'enlèvement
+                    </button>
+                  </BsdListItem>
+                </BsdList>
+              )}
+            </BsdBoxColumn>
+          </BsdBox>
+          <BsdBox>
+            <BsdBoxColumn>
+              <BsdLabel>
+                19. Déclaration de l’exploitant du site d’entreposage ou de
+                reconditionnement
+              </BsdLabel>
+              <BsdList>
+                <BsdListItem>
+                  Je soussigné certifie que les renseignements portés ci-dessus
+                  sont exacts et établis de bonne foi
+                </BsdListItem>
+              </BsdList>
+              {values.temporaryStorage.signature ? (
+                <BsdSignature
+                  name="temporaryStorage.signature"
+                  onCancel={() => {
+                    setFieldValue("temporaryStorage.signature", null);
+                  }}
+                />
+              ) : (
+                <BsdList>
+                  <BsdListItem>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const signature: Signature = {
+                          author: values.temporaryStorage!.company.contact,
+                          date: new Date().toLocaleDateString(),
+                        };
+                        setFieldValue("temporaryStorage.signature", signature);
+                      }}
+                    >
+                      Signer l'enlèvement
+                    </button>
+                  </BsdListItem>
+                </BsdList>
+              )}
             </BsdBoxColumn>
           </BsdBox>
         </>
