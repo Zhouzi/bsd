@@ -71,7 +71,12 @@ export enum TransporterPackageType {
 export interface TemporaryStorage {
   company: Company;
   reception: Reception | null;
+
+  // It seems that the temporary storage's treatment is never filled
+  // We assume that it did what the emitter thought it would
+  // And if the emitter made a mistake, the temporary storage update can change their prediction
   treatment: Treatment | null;
+
   transporter: Transporter;
   signature: Signature | null;
   nextTreatmentOperation: TreatmentOperation;
