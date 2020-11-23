@@ -14,11 +14,11 @@ export const CodeLine = styled.div<{
     switch (props.variant) {
       case "added":
         return css`
-          background-color: #197546;
+          background-color: #1f6947;
         `;
       case "removed":
         return css`
-          background-color: #ab3939;
+          background-color: #ab313c;
         `;
       case "unchanged":
       default:

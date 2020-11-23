@@ -4,18 +4,18 @@ import AutosizeInput from "react-input-autosize";
 import { FieldProps } from "formik";
 
 export const BsdContainer = styled.div`
-  border-bottom: 1px solid #3d3d3d;
+  border-bottom: 1px solid #161c4e;
   margin: 1rem;
 `;
 export const BsdBox = styled.div`
-  border: 1px solid #3d3d3d;
+  border: 1px solid #161c4e;
   border-right: 0;
   border-bottom: 0;
   display: flex;
 `;
 export const BsdBoxColumn = styled.div`
   flex: 1;
-  border-right: 1px solid #3d3d3d;
+  border-right: 1px solid #161c4e;
   padding: 0.5rem;
 `;
 export const BsdLabel = styled.label`
@@ -24,14 +24,14 @@ export const BsdLabel = styled.label`
   font-weight: bold;
   margin-bottom: 0.5rem;
 `;
-const BsdInput = styled(AutosizeInput).attrs({ placeholder: " ".repeat(6) })`
+const BsdInput = styled(AutosizeInput).attrs({ placeholder: " ".repeat(20) })`
   & input {
     font: inherit;
     font-family: "Pangolin", cursive;
     color: inherit;
     padding: 0;
     border: 0;
-    background-color: transparent;
+    background-color: #f6f7ff;
 
     &:not(:focus) {
       cursor: pointer;
