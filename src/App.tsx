@@ -235,13 +235,18 @@ const SCENARIOS: Scenario[] = [
             signature: null,
             transporter: {
               company: TRANSPORTER_COMPANY,
-              packages: [],
               receipt: TRANSPORTER_RECEIPT,
-              signature: null,
+              packages: [
+                {
+                  type: TransporterPackageType.Benne,
+                  quantity: 1,
+                },
+              ],
               weight: {
                 type: WasteWeightType.Estimate,
                 tons: 0.5,
               },
+              signature: null,
             },
           },
           recipient: {
